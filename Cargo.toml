@@ -1,0 +1,8 @@
+[package]
+name = "osiris"
+version = "0.1.0"
+authors = ["Derek Hendrickx <derek@hendrickx.me>"]
+
+[dependencies]
+hyper = "0.11.6"
+futures = "0.1.17"
