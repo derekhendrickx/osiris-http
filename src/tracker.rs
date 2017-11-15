@@ -7,7 +7,8 @@ use hyper::header::ContentLength;
 use hyper::server::{Request, Response, Service};
 use hyper::{Method, StatusCode};
 
-use announce;
+use announce::{Announce};
+use scrape::{Scrape};
 
 const PHRASE: &'static str = "Hello, World!";
 
@@ -21,8 +22,8 @@ impl Service for Tracker {
 
     fn call(&self, req: Request) -> Self::Future {
         match (req.method(), req.path()) {
-            (&Method::Get, "/announce") => announce::Announce::announce(req.query()),
-            (&Method::Get, "/scrape") => println!("Scrape"),
+            (&Method::Get, "/announce") => Announce::announce(req.query()),
+            (&Method::Get, "/scrape") => Scrape::scrape(req.query()),
             _ => println!("{:}", StatusCode::NotFound),
         }
 
