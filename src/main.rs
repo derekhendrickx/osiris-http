@@ -7,6 +7,8 @@ use hyper::header::ContentLength;
 use hyper::server::{Http, Request, Response, Service};
 use hyper::{Method, StatusCode};
 
+mod announce;
+
 struct Tracker;
 
 const PHRASE: &'static str = "Hello, World!";
@@ -22,7 +24,7 @@ impl Service for Tracker {
         println!("Path: {:}", req.path());
 
         match (req.method(), req.path()) {
-            (&Method::Get, "/announce") => println!("Announce"),
+            (&Method::Get, "/announce") => announce::Announce::announce(req.query()),
             (&Method::Get, "/scrape") => println!("Scrape"),
             _ => println!("{:}", StatusCode::NotFound),
         }
