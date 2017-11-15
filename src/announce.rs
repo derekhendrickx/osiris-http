@@ -16,7 +16,7 @@ impl Announce {
 			None => println!("Query: None"),
 		}
 
-		println!("Info hash: {:}", query_string["info_hash"]);
+		println!("Query: {:}", query_string);
 
 		response.set_body("Announce to the tracker\nd5:filesd20:xxxxxxxxxxxxxxxxxxxxd8:completei2e10:downloadedi0e10:incompletei4e4:name12:xxxxxxxxxxxxee5:flagsd20:min_request_intervali3600eee");
 	}
