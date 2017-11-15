@@ -5,6 +5,7 @@ use futures::future::Future;
 
 use hyper::header::ContentLength;
 use hyper::server::{Http, Request, Response, Service};
+use hyper::{Method, StatusCode};
 
 struct Tracker;
 
@@ -19,6 +20,12 @@ impl Service for Tracker {
     fn call(&self, req: Request) -> Self::Future {
         println!("Method: {:}", req.method());
         println!("Path: {:}", req.path());
+
+        match (req.method(), req.path()) {
+            (&Method::Get, "/announce") => println!("Announce"),
+            (&Method::Get, "/scrape") => println!("Scrape"),
+            _ => println!("{:}", StatusCode::NotFound),
+        }
 
         match req.query() {
             Some(str) => println!("Query: {:}", str),
