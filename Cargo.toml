@@ -7,4 +7,3 @@ authors = ["Derek Hendrickx <derek@hendrickx.me>"]
 hyper = "0.11.6"
 futures = "0.1.17"
 qstring = "0.1.2"
-bencode = "0.1.16"
