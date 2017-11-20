@@ -2,8 +2,8 @@ extern crate hyper;
 extern crate futures;
 
 use hyper::server::{Request, Response, Service};
-use hyper::{Method, StatusCode};
-use self::futures::future::Future;
+use hyper::{Get, StatusCode};
+use self::futures::future::FutureResult;
 
 use announce::{Announce};
 use scrape::{Scrape};
@@ -14,19 +14,19 @@ impl Service for Tracker {
     type Request = Request;
     type Response = Response;
     type Error = hyper::Error;
-    type Future = Box<Future<Item=Self::Response, Error=Self::Error>>;
+    type Future = FutureResult<Response, hyper::Error>;
 
-    fn call(&self, req: Request) -> Self::Future {
-		let mut response = Response::new();
-
-        match (req.method(), req.path()) {
-            (&Method::Get, "/announce") => Announce::announce(req.query(), &mut response),
-            (&Method::Get, "/scrape") => Scrape::scrape(req.query(), &mut response),
+    fn call(&self, request: Request) -> Self::Future {
+        futures::future::ok(match (request.method(), request.path()) {
+            (&Get, "/announce") => {
+                Announce::announce(request)
+            },
+            (&Get, "/scrape") => {
+                Scrape::scrape(request.query())
+            },
             _ => {
-				response.set_status(StatusCode::NotFound);
-			},
-        }
-
-        Box::new(futures::future::ok(response))
+                Response::new().with_status(StatusCode::NotFound)
+            }
+        })
     }
 }

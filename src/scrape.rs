@@ -7,7 +7,7 @@ use self::qstring::QString;
 pub struct Scrape;
 
 impl Scrape {
-	pub fn scrape(query: Option<&str>, response: &mut Response) {
+	pub fn scrape(query: Option<&str>) -> Response {
 		println!("Scrape");
 		let mut query_string = QString::from("");
 
@@ -18,6 +18,6 @@ impl Scrape {
 
 		println!("Query: {:}", query_string);
 
-		response.set_body("Scrape the tracker");
+		Response::new().with_body("Scrape the tracker")
 	}
 }

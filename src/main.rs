@@ -1,4 +1,7 @@
+#[macro_use]
+extern crate bip_bencode;
 extern crate hyper;
+
 use hyper::server::{Http};
 
 mod tracker;
