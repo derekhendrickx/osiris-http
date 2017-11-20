@@ -1,6 +1,7 @@
 extern crate hyper;
 extern crate qstring;
 
+use std::fmt;
 use std::net::{IpAddr, Ipv4Addr};
 use hyper::server::{Request, Response};
 use hyper::header::{Headers, ContentLength, ContentType, CacheControl, CacheDirective};
@@ -13,6 +14,19 @@ enum AnnounceEvent {
     Started,
 	Stopped,
 	Completed,
+	None
+}
+
+impl fmt::Display for AnnounceEvent {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		let event = match *self {
+			AnnounceEvent::Started => "started",
+			AnnounceEvent::Stopped => "stopped",
+			AnnounceEvent::Completed => "completed",
+			AnnounceEvent::None => "none"
+		};
+		write!(f, "{}", event)
+    }
 }
 
 struct AnnounceRequest {
@@ -35,6 +49,14 @@ impl AnnounceRequest {
 	fn new(data: &QString, ip: &IpAddr) -> Self {
 		let ip_str = &data["ip"];
 		let mut announce_request_ip = *ip;
+
+		let event = match &*data["event"] {
+			"started" => AnnounceEvent::Started,
+			"stopped" => AnnounceEvent::Stopped,
+			"completed" => AnnounceEvent::Completed,
+			_ => AnnounceEvent::None
+		};
+
 		if !ip_str.is_empty() {
 			announce_request_ip = (&data["ip"]).parse::<IpAddr>().unwrap();
 		}
@@ -48,13 +70,19 @@ impl AnnounceRequest {
 			left: (&data["left"]).parse().unwrap(),
 			compact: (&data["compact"]).parse::<u8>().unwrap() == 1,
 			no_peer_id: (&data["no_peer_id"]).parse::<u8>().unwrap() == 1,
-			event: AnnounceEvent::Started,
+			event,
 			ip: announce_request_ip,
 			numwant: (&data["numwant"]).parse().unwrap(),
 			key: (&data["key"]).to_string(),
 			trackerid: (&data["trackerid"]).to_string()
 		}
 	}
+}
+
+impl fmt::Display for AnnounceRequest {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "\ninfo_hash = {}\npeer_id = {}\nport = {}\nuploaded = {}\ndownloaded = {}\nleft = {}\ncompact = {}\nno_peer_id = {}\nevent = {}\nip = {}\nnumwant = {}\nkey = {}\ntrackerid = {}", self.info_hash, self.peer_id, self.port, self.uploaded, self.downloaded, self.left, self.compact, self.no_peer_id, self.event, self.ip, self.numwant, self.key, self.trackerid)
+    }
 }
 
 impl Announce {
@@ -75,39 +103,24 @@ impl Announce {
 
 		let announce_request = AnnounceRequest::new(&query_string, &ip);
 
-		println!("Query:");
-		println!("\tinfo_hash = {}", announce_request.info_hash);
-		println!("\tpeer_id = {}", announce_request.peer_id);
-		println!("\tport = {}", announce_request.port);
-		println!("\tuploaded = {}", announce_request.uploaded);
-		println!("\tdownloaded = {}", announce_request.downloaded);
-		println!("\tleft = {}", announce_request.left);
-		println!("\tcompact = {}", announce_request.compact);
-		println!("\tno_peer_id = {}", announce_request.no_peer_id);
-		// println!("\tevent = {}", announce_request.event);
-		println!("\tip = {}", announce_request.ip);
-		println!("\tnumwant = {}", announce_request.numwant);
-		println!("\tkey = {}", announce_request.key);
-		println!("\ttrackerid = {}", announce_request.trackerid);
+		println!("Request: {:}", announce_request);
 
 		let peers = ben_map!{
-			"peer_id" => ben_bytes!(announce_request.peer_id),
-			"ip" => ben_bytes!(ip.to_string()),
+			"peer id" => ben_bytes!(announce_request.peer_id),
+			"ip" => ben_bytes!(announce_request.ip.to_string()),
 			"port" => ben_int!(announce_request.port as i64)
 		};
 		let message = (ben_map!{
             "interval" => ben_int!(30),
 			"complete" => ben_int!(1),
 			"incomplete" => ben_int!(0),
-			"peers" => peers
+			"peers" => ben_list!(peers)
         }).encode();
-		let message = "Test";
 
 		// let message = (ben_map!{
 		// 	"failure reason" => ben_bytes!("Tracker offline")
 		// }).encode();
 
-		// response.set_body("Announce to the tracker\nd5:filesd20:xxxxxxxxxxxxxxxxxxxxd8:completei2e10:downloadedi0e10:incompletei4e4:name12:xxxxxxxxxxxxee5:flagsd20:min_request_intervali3600eee");
 		let mut headers = Headers::new();
 		headers.set(ContentLength(message.len() as u64));
 		headers.set(CacheControl(vec![CacheDirective::NoCache]));
