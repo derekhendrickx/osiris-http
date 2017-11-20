@@ -32,7 +32,13 @@ struct AnnounceRequest {
 }
 
 impl AnnounceRequest {
-	fn new(data: &QString) -> Self {
+	fn new(data: &QString, ip: &IpAddr) -> Self {
+		let ip_str = &data["ip"];
+		let mut announce_request_ip = *ip;
+		if !ip_str.is_empty() {
+			announce_request_ip = (&data["ip"]).parse::<IpAddr>().unwrap();
+		}
+
 		AnnounceRequest {
 			info_hash: (&data["info_hash"]).to_string(),
 			peer_id: (&data["peer_id"]).to_string(),
@@ -43,7 +49,7 @@ impl AnnounceRequest {
 			compact: (&data["compact"]).parse::<u8>().unwrap() == 1,
 			no_peer_id: (&data["no_peer_id"]).parse::<u8>().unwrap() == 1,
 			event: AnnounceEvent::Started,
-			ip: (&data["ip"]).parse::<IpAddr>().unwrap(),
+			ip: announce_request_ip,
 			numwant: (&data["numwant"]).parse().unwrap(),
 			key: (&data["key"]).to_string(),
 			trackerid: (&data["trackerid"]).to_string()
@@ -67,7 +73,7 @@ impl Announce {
 			None => println!("Query: None"),
 		}
 
-		let announce_request = AnnounceRequest::new(&query_string);
+		let announce_request = AnnounceRequest::new(&query_string, &ip);
 
 		println!("Query:");
 		println!("\tinfo_hash = {}", announce_request.info_hash);
