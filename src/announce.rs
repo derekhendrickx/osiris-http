@@ -147,17 +147,17 @@ impl Announce {
 
         match request.remote_addr() {
             Some(socket) => ip = socket.ip(),
-            None => println!("Query: None"),
+            None => error!("No IP"),
         }
 
         match request.query() {
             Some(str) => query_string = QString::from(str),
-            None => println!("Query: None"),
+            None => error!("Query: None"),
         }
 
         let announce_request = AnnounceRequest::new(&query_string, &ip);
 
-        println!("Announce\nRequest: {:}", announce_request);
+        info!("Announce\nRequest: {:}", announce_request);
 
         let body = announce_request.bencode();
 

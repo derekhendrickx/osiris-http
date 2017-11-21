@@ -47,12 +47,12 @@ impl Scrape {
 
         match request.query() {
             Some(str) => query_string = QString::from(str),
-            None => println!("Query: None"),
+            None => error!("Query: None"),
         }
 
         let scrape_request = ScrapeRequest::new(&query_string);
 
-        println!("Scrape Request: {:}", scrape_request);
+        info!("Scrape Request: {:}", scrape_request);
 
         let body = scrape_request.bencode();
 
