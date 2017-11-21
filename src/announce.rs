@@ -77,6 +77,33 @@ impl AnnounceRequest {
 			trackerid: (&data["trackerid"]).to_string()
 		}
 	}
+
+	fn to_bencode(self) -> Vec<u8> {
+		let peers;
+
+		if self.compact {
+			// println!("{}", self.ip.to_string() + &self.port.to_string());
+			let peers_binary = (self.ip.to_string() + &self.port.to_string()).into_bytes();
+			// println!("{:?}", peers_binary);
+			peers = ben_bytes!(peers_binary);
+		} else {
+			let peers_dictionnary = ben_map!{
+				"peer id" => ben_bytes!(self.peer_id),
+				"ip" => ben_bytes!(self.ip.to_string()),
+				"port" => ben_int!(self.port as i64)
+			};
+			peers = ben_list!(peers_dictionnary);
+		}
+
+		let message = ben_map!{
+            "interval" => ben_int!(30),
+			"complete" => ben_int!(1),
+			"incomplete" => ben_int!(0),
+			"peers" => peers
+        };
+
+		message.encode()
+	}
 }
 
 impl fmt::Display for AnnounceRequest {
@@ -104,29 +131,19 @@ impl Announce {
 
 		println!("Announce\nRequest: {:}", announce_request);
 
-		let peers = ben_map!{
-			"peer id" => ben_bytes!(announce_request.peer_id),
-			"ip" => ben_bytes!(announce_request.ip.to_string()),
-			"port" => ben_int!(announce_request.port as i64)
-		};
-		let message = (ben_map!{
-            "interval" => ben_int!(30),
-			"complete" => ben_int!(1),
-			"incomplete" => ben_int!(0),
-			"peers" => ben_list!(peers)
-        }).encode();
+		let body = announce_request.to_bencode();
 
 		// let message = (ben_map!{
 		// 	"failure reason" => ben_bytes!("Tracker offline")
 		// }).encode();
 
 		let mut headers = Headers::new();
-		headers.set(ContentLength(message.len() as u64));
+		headers.set(ContentLength(body.len() as u64));
 		headers.set(CacheControl(vec![CacheDirective::NoCache]));
 		headers.set(ContentType(mime::TEXT_PLAIN));
 
 		Response::new()
 			.with_headers(headers)
-			.with_body(message)
+			.with_body(body)
 	}
 }
