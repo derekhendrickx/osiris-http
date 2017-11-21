@@ -81,29 +81,27 @@ impl AnnounceRequest {
 		}
 	}
 
-	fn to_bencode(self) -> Vec<u8> {
-		let peers;
-
-		if self.compact {
+	fn bencode(self) -> Vec<u8> {
+		let peers = if self.compact {
 			let mut peer_binary = vec![];
 
 			if self.ip.is_ipv4() {
 				let ipv4 = Ipv4Addr::from_str(&self.ip.to_string()).unwrap();
-				for  number in ipv4.octets().iter() {
+				for  number in &ipv4.octets() {
 					peer_binary.write_u8(*number).unwrap();
 				}
 			}
 
 			peer_binary.write_u16::<BigEndian>(self.port).unwrap();
-			peers = ben_bytes!(peer_binary);
+			ben_bytes!(peer_binary)
 		} else {
 			let peers_dictionnary = ben_map!{
 				"peer id" => ben_bytes!(self.peer_id),
 				"ip" => ben_bytes!(self.ip.to_string()),
-				"port" => ben_int!(self.port as i64)
+				"port" => ben_int!(i64::from(self.port))
 			};
-			peers = ben_list!(peers_dictionnary);
-		}
+			ben_list!(peers_dictionnary)
+		};
 
 		let message = ben_map!{
             "interval" => ben_int!(30),
@@ -123,7 +121,7 @@ impl fmt::Display for AnnounceRequest {
 }
 
 impl Announce {
-	pub fn announce(request: Request) -> Response {
+	pub fn announce(request: &Request) -> Response {
 		let mut query_string = QString::from("");
 		let mut ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
 
@@ -141,7 +139,7 @@ impl Announce {
 
 		println!("Announce\nRequest: {:}", announce_request);
 
-		let body = announce_request.to_bencode();
+		let body = announce_request.bencode();
 
 		// let message = (ben_map!{
 		// 	"failure reason" => ben_bytes!("Tracker offline")
