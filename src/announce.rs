@@ -87,7 +87,6 @@ impl fmt::Display for AnnounceRequest {
 
 impl Announce {
 	pub fn announce(request: Request) -> Response {
-		println!("Announce");
 		let mut query_string = QString::from("");
 		let mut ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
 
@@ -103,7 +102,7 @@ impl Announce {
 
 		let announce_request = AnnounceRequest::new(&query_string, &ip);
 
-		println!("Request: {:}", announce_request);
+		println!("Announce\nRequest: {:}", announce_request);
 
 		let peers = ben_map!{
 			"peer id" => ben_bytes!(announce_request.peer_id),
