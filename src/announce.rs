@@ -3,6 +3,7 @@ extern crate qstring;
 extern crate byteorder;
 
 use std::fmt;
+use std::str::FromStr;
 use std::net::{IpAddr, Ipv4Addr};
 use hyper::server::{Request, Response};
 use hyper::header::{Headers, ContentLength, ContentType, CacheControl, CacheDirective};
@@ -83,27 +84,24 @@ impl AnnounceRequest {
 	fn to_bencode(self) -> Vec<u8> {
 		let peers;
 
-		// if self.compact {
-			// println!("{}", self.ip.to_string() + &self.port.to_string());
-			// let peers_binary = (self.ip.to_string() + &self.port.to_string()).into_bytes();
-			// println!("{:?}", peers_binary);
-			// peers = ben_bytes!(peers_binary);
-			let mut wtr = vec![];
-			wtr.write_u16::<BigEndian>(127).unwrap();
-			wtr.write_u16::<BigEndian>(0).unwrap();
-			wtr.write_u16::<BigEndian>(0).unwrap();
-			wtr.write_u16::<BigEndian>(1).unwrap();
-			wtr.write_u16::<BigEndian>(self.port).unwrap();
-			println!("{:?}", wtr);
-			peers = ben_bytes!(wtr);
-		// } else {
-		// 	let peers_dictionnary = ben_map!{
-		// 		"peer id" => ben_bytes!(self.peer_id),
-		// 		"ip" => ben_bytes!(self.ip.to_string()),
-		// 		"port" => ben_int!(self.port as i64)
-		// 	};
-		// 	peers = ben_list!(peers_dictionnary);
-		// }
+		if self.compact {
+			let mut peer_binary = vec![];
+			if self.ip.is_ipv4() {
+				let ipv4 = Ipv4Addr::from_str(&self.ip.to_string()).unwrap();
+				for  number in ipv4.octets().iter() {
+					peer_binary.write_u8(*number).unwrap();
+				}
+			}
+			peer_binary.write_u16::<BigEndian>(self.port).unwrap();
+			peers = ben_bytes!(peer_binary);
+		} else {
+			let peers_dictionnary = ben_map!{
+				"peer id" => ben_bytes!(self.peer_id),
+				"ip" => ben_bytes!(self.ip.to_string()),
+				"port" => ben_int!(self.port as i64)
+			};
+			peers = ben_list!(peers_dictionnary);
+		}
 
 		let message = ben_map!{
             "interval" => ben_int!(30),
