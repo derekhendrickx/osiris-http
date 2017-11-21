@@ -86,12 +86,14 @@ impl AnnounceRequest {
 
 		if self.compact {
 			let mut peer_binary = vec![];
+
 			if self.ip.is_ipv4() {
 				let ipv4 = Ipv4Addr::from_str(&self.ip.to_string()).unwrap();
 				for  number in ipv4.octets().iter() {
 					peer_binary.write_u8(*number).unwrap();
 				}
 			}
+
 			peer_binary.write_u16::<BigEndian>(self.port).unwrap();
 			peers = ben_bytes!(peer_binary);
 		} else {
