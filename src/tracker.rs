@@ -19,7 +19,7 @@ impl Service for Tracker {
     fn call(&self, request: Request) -> Self::Future {
         futures::future::ok(match (request.method(), request.path()) {
             (&Get, "/announce") => Announce::announce(&request),
-            (&Get, "/scrape") => Scrape::scrape(request.query()),
+            (&Get, "/scrape") => Scrape::scrape(&request),
             _ => Response::new().with_status(StatusCode::NotFound),
         })
     }
