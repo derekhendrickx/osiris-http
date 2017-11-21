@@ -3,8 +3,8 @@ extern crate bip_bencode;
 extern crate hyper;
 extern crate local_ip;
 
-use std::net::{Ipv4Addr};
-use hyper::server::{Http};
+use std::net::Ipv4Addr;
+use hyper::server::Http;
 
 mod tracker;
 mod announce;
