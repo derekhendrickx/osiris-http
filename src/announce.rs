@@ -1,11 +1,13 @@
 extern crate hyper;
 extern crate qstring;
+extern crate byteorder;
 
 use std::fmt;
 use std::net::{IpAddr, Ipv4Addr};
 use hyper::server::{Request, Response};
 use hyper::header::{Headers, ContentLength, ContentType, CacheControl, CacheDirective};
 use hyper::mime;
+use self::byteorder::{BigEndian, WriteBytesExt};
 use self::qstring::QString;
 
 pub struct Announce;
@@ -81,19 +83,27 @@ impl AnnounceRequest {
 	fn to_bencode(self) -> Vec<u8> {
 		let peers;
 
-		if self.compact {
+		// if self.compact {
 			// println!("{}", self.ip.to_string() + &self.port.to_string());
-			let peers_binary = (self.ip.to_string() + &self.port.to_string()).into_bytes();
+			// let peers_binary = (self.ip.to_string() + &self.port.to_string()).into_bytes();
 			// println!("{:?}", peers_binary);
-			peers = ben_bytes!(peers_binary);
-		} else {
-			let peers_dictionnary = ben_map!{
-				"peer id" => ben_bytes!(self.peer_id),
-				"ip" => ben_bytes!(self.ip.to_string()),
-				"port" => ben_int!(self.port as i64)
-			};
-			peers = ben_list!(peers_dictionnary);
-		}
+			// peers = ben_bytes!(peers_binary);
+			let mut wtr = vec![];
+			wtr.write_u16::<BigEndian>(127).unwrap();
+			wtr.write_u16::<BigEndian>(0).unwrap();
+			wtr.write_u16::<BigEndian>(0).unwrap();
+			wtr.write_u16::<BigEndian>(1).unwrap();
+			wtr.write_u16::<BigEndian>(self.port).unwrap();
+			println!("{:?}", wtr);
+			peers = ben_bytes!(wtr);
+		// } else {
+		// 	let peers_dictionnary = ben_map!{
+		// 		"peer id" => ben_bytes!(self.peer_id),
+		// 		"ip" => ben_bytes!(self.ip.to_string()),
+		// 		"port" => ben_int!(self.port as i64)
+		// 	};
+		// 	peers = ben_list!(peers_dictionnary);
+		// }
 
 		let message = ben_map!{
             "interval" => ben_int!(30),
