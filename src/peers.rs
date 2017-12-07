@@ -1,6 +1,7 @@
 use std::net::IpAddr;
-use std::collections::HashMap;
 
+#[derive(Debug)]
+#[derive(Clone)]
 pub struct Peer {
     pub id: String,
     port: u16,
@@ -19,20 +20,6 @@ impl Peer {
             uploaded: 0,
             downloaded: 0,
             left: 0,
-        }
-    }
-}
-
-struct File {
-    info_hash: String,
-    peers: HashMap<String, Peer>,
-}
-
-impl File {
-    fn new(info_hash: String) -> File {
-        File {
-            info_hash,
-            peers: HashMap::new(),
         }
     }
 }

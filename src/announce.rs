@@ -2,7 +2,6 @@ extern crate hyper;
 extern crate qstring;
 extern crate byteorder;
 
-use std::fmt;
 use std::str::FromStr;
 use std::net::{IpAddr, Ipv4Addr};
 use hyper::server::{Request, Response};
@@ -16,6 +15,7 @@ use peers::Peer;
 
 pub struct Announce;
 
+#[derive(Debug)]
 enum AnnounceEvent {
     Started,
     Stopped,
@@ -23,18 +23,7 @@ enum AnnounceEvent {
     None,
 }
 
-impl fmt::Display for AnnounceEvent {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let event = match *self {
-            AnnounceEvent::Started => "started",
-            AnnounceEvent::Stopped => "stopped",
-            AnnounceEvent::Completed => "completed",
-            AnnounceEvent::None => "none",
-        };
-        write!(f, "{}", event)
-    }
-}
-
+#[derive(Debug)]
 struct AnnounceRequest {
     info_hash: String,
     peer_id: String,
@@ -119,30 +108,6 @@ impl AnnounceRequest {
     }
 }
 
-impl fmt::Display for AnnounceRequest {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "\ninfo_hash = {}\npeer_id = {}\nport = {}\nuploaded = {}\n\
-			downloaded = {}\nleft = {}\ncompact = {}\nno_peer_id = {}\n\
-			event = {}\nip = {}\nnumwant = {}\nkey = {}\ntrackerid = {}",
-            self.info_hash,
-            self.peer_id,
-            self.port,
-            self.uploaded,
-            self.downloaded,
-            self.left,
-            self.compact,
-            self.no_peer_id,
-            self.event,
-            self.ip,
-            self.numwant,
-            self.key,
-            self.trackerid
-        )
-    }
-}
-
 impl Announce {
     pub fn announce(tracker: &mut Tracker, request: &Request) -> Response {
         let mut query_string = QString::from("");
@@ -160,24 +125,26 @@ impl Announce {
 
         let announce_request = AnnounceRequest::new(&query_string, &ip);
 
-        info!("Announce\nRequest: {:}", announce_request);
+        info!("Announce\nRequest: {:?}", announce_request);
 
-        let peer = Peer::new(
+        let peer = Box::new(Peer::new(
             &announce_request.peer_id,
             announce_request.port,
             announce_request.ip,
-        );
+        ));
+        println!("Peer: {:?}", peer);
+        println!("Tracker before: {:?}", tracker);
         println!(
             "Has file: {}",
             tracker.has_file(&announce_request.info_hash)
         );
         tracker.add_file(&announce_request.info_hash);
+        tracker.add_peer(&announce_request.info_hash, peer);
+        println!("Tracker after: {:?}", tracker);
         println!(
             "Has file: {}",
             tracker.has_file(&announce_request.info_hash)
         );
-        // tracker.addPeer(&announce_request.info_hash, &peer);
-        // println!("{:}", peer);
 
         let body = announce_request.bencode();
 
