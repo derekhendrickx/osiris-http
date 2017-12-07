@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tracker::Tracker;
 
 use hyper::Error;
@@ -11,12 +11,12 @@ use announce::Announce;
 use scrape::Scrape;
 
 pub struct Routes {
-    tracker: Mutex<Box<Tracker>>,
+    tracker: Arc<Mutex<Tracker>>,
 }
 
 impl Routes {
-    pub fn new() -> Routes {
-        Routes { tracker: Mutex::new(Box::new(Tracker::new())) }
+    pub fn new(tracker: Arc<Mutex<Tracker>>) -> Routes {
+        Routes { tracker }
     }
 }
 
@@ -27,10 +27,10 @@ impl Service for Routes {
     type Future = FutureResult<Response, Error>;
 
     fn call(&self, request: Request) -> Self::Future {
-        let mut tracker = self.tracker.lock().unwrap();
+        // let mut tracker = self.tracker.lock().unwrap();
         future::ok(match (request.method(), request.path()) {
-            (&Get, "/announce") => Announce::announce(&mut tracker, &request),
-            (&Get, "/scrape") => Scrape::scrape(&tracker, &request),
+            (&Get, "/announce") => Announce::announce(&mut self.tracker.lock().unwrap(), &request),
+            (&Get, "/scrape") => Scrape::scrape(&mut self.tracker.lock().unwrap(), &request),
             _ => Response::new().with_status(StatusCode::NotFound),
         })
     }
