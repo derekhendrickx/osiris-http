@@ -7,6 +7,8 @@ use hyper::header::{Headers, ContentLength, ContentType, CacheControl, CacheDire
 use hyper::mime;
 use self::qstring::QString;
 
+use tracker::Tracker;
+
 pub struct Scrape;
 
 struct ScrapeRequest {
@@ -42,7 +44,7 @@ impl fmt::Display for ScrapeRequest {
 }
 
 impl Scrape {
-    pub fn scrape(request: &Request) -> Response {
+    pub fn scrape(tracker: &Tracker, request: &Request) -> Response {
         let mut query_string = QString::from("");
 
         match request.query() {
