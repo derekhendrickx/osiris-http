@@ -44,7 +44,7 @@ impl fmt::Display for ScrapeRequest {
 }
 
 impl Scrape {
-    pub fn scrape(tracker: &Tracker, request: &Request) -> Response {
+    pub fn scrape(_tracker: &mut Tracker, request: &Request) -> Response {
         let mut query_string = QString::from("");
 
         match request.query() {

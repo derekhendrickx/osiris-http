@@ -25,7 +25,7 @@ fn main() {
     let tracker = Arc::new(Mutex::new(Tracker::new()));
     let server = Http::new()
         .bind(&addr, move || {
-            let routes = routes::Routes::new(tracker.clone());
+            let routes = routes::Routes::new(Arc::clone(&tracker));
             Ok(routes)
         })
         .unwrap();
