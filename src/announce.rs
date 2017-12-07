@@ -132,19 +132,10 @@ impl Announce {
             announce_request.port,
             announce_request.ip,
         ));
-        println!("Peer: {:?}", peer);
         println!("Tracker before: {:?}", tracker);
-        println!(
-            "Has file: {}",
-            tracker.has_file(&announce_request.info_hash)
-        );
         tracker.add_file(&announce_request.info_hash);
         tracker.add_peer(&announce_request.info_hash, peer);
         println!("Tracker after: {:?}", tracker);
-        println!(
-            "Has file: {}",
-            tracker.has_file(&announce_request.info_hash)
-        );
 
         let body = announce_request.bencode();
 
