@@ -2,7 +2,6 @@ extern crate hyper;
 extern crate qstring;
 extern crate byteorder;
 
-use std::cell::Cell;
 use std::fmt;
 use std::str::FromStr;
 use std::net::{IpAddr, Ipv4Addr};
