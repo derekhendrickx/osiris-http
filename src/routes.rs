@@ -27,10 +27,10 @@ impl Service for Routes {
     type Future = FutureResult<Response, Error>;
 
     fn call(&self, request: Request) -> Self::Future {
-        // let mut tracker = self.tracker.lock().unwrap();
+        let mut tracker = self.tracker.lock().unwrap();
         future::ok(match (request.method(), request.path()) {
-            (&Get, "/announce") => Announce::announce(&mut self.tracker.lock().unwrap(), &request),
-            (&Get, "/scrape") => Scrape::scrape(&mut self.tracker.lock().unwrap(), &request),
+            (&Get, "/announce") => Announce::announce(&mut tracker, &request),
+            (&Get, "/scrape") => Scrape::scrape(&mut tracker, &request),
             _ => Response::new().with_status(StatusCode::NotFound),
         })
     }
