@@ -3,14 +3,12 @@ use std::collections::HashMap;
 use peers::Peer;
 
 pub struct Tracker {
-    files: HashMap<String, HashMap<String, Box<Peer>>>
+    files: HashMap<String, HashMap<String, Box<Peer>>>,
 }
 
 impl Tracker {
     pub fn new() -> Tracker {
-        Tracker {
-            files: HashMap::new()
-        }
+        Tracker { files: HashMap::new() }
     }
 
     pub fn has_file(&self, file: &str) -> bool {

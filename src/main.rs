@@ -19,10 +19,12 @@ fn main() {
     env_logger::init().unwrap();
     let ip = Ipv4Addr::new(0, 0, 0, 0);
     let addr = (ip.to_string() + ":6969").parse().unwrap();
-    let server = Http::new().bind(&addr, || {
-        let routes = routes::Routes::new();
-        Ok(routes)
-    }).unwrap();
+    let server = Http::new()
+        .bind(&addr, || {
+            let routes = routes::Routes::new();
+            Ok(routes)
+        })
+        .unwrap();
     info!("Tracker running on {}...", addr);
     server.run().unwrap();
 }

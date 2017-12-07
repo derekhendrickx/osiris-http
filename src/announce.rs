@@ -163,10 +163,20 @@ impl Announce {
 
         info!("Announce\nRequest: {:}", announce_request);
 
-        let peer = Peer::new(&announce_request.peer_id, announce_request.port, announce_request.ip);
-        println!("Has file: {}", tracker.has_file(&announce_request.info_hash));
+        let peer = Peer::new(
+            &announce_request.peer_id,
+            announce_request.port,
+            announce_request.ip,
+        );
+        println!(
+            "Has file: {}",
+            tracker.has_file(&announce_request.info_hash)
+        );
         tracker.add_file(&announce_request.info_hash);
-        println!("Has file: {}", tracker.has_file(&announce_request.info_hash));
+        println!(
+            "Has file: {}",
+            tracker.has_file(&announce_request.info_hash)
+        );
         // tracker.addPeer(&announce_request.info_hash, &peer);
         // println!("{:}", peer);
 

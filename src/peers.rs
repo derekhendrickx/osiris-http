@@ -1,4 +1,4 @@
-use std::net::{IpAddr};
+use std::net::IpAddr;
 use std::collections::HashMap;
 
 pub struct Peer {
