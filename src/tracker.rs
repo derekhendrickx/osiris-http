@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use peers::Peer;
 
+#[derive(Debug)]
+#[derive(Clone)]
 pub struct Tracker {
     files: HashMap<String, HashMap<String, Box<Peer>>>,
 }
@@ -19,8 +21,8 @@ impl Tracker {
         self.files.insert(file.to_string(), HashMap::new());
     }
 
-    pub fn add_peer(&mut self, info_hash: &str, peer: &Peer) {
+    pub fn add_peer(&mut self, info_hash: &str, peer: Box<Peer>) {
         let peers = self.files.get_mut(info_hash).unwrap();
-        // peers.entry(peer.id.to_string()).or_insert(Box::new(peer));
+        peers.entry(peer.id.to_string()).or_insert(peer);
     }
 }
