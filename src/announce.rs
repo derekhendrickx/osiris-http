@@ -2,6 +2,7 @@ extern crate hyper;
 extern crate qstring;
 extern crate byteorder;
 
+use std::cell::Cell;
 use std::fmt;
 use std::str::FromStr;
 use std::net::{IpAddr, Ipv4Addr};
@@ -10,6 +11,9 @@ use hyper::header::{Headers, ContentLength, ContentType, CacheControl, CacheDire
 use hyper::mime;
 use self::byteorder::{BigEndian, WriteBytesExt};
 use self::qstring::QString;
+
+use tracker::Tracker;
+use peers::Peer;
 
 pub struct Announce;
 
@@ -49,7 +53,7 @@ struct AnnounceRequest {
 }
 
 impl AnnounceRequest {
-    fn new(data: &QString, ip: &IpAddr) -> Self {
+    fn new(data: &QString, ip: &IpAddr) -> AnnounceRequest {
         let ip_str = &data["ip"];
         let mut announce_request_ip = *ip;
 
@@ -141,7 +145,7 @@ impl fmt::Display for AnnounceRequest {
 }
 
 impl Announce {
-    pub fn announce(request: &Request) -> Response {
+    pub fn announce(tracker: &mut Tracker, request: &Request) -> Response {
         let mut query_string = QString::from("");
         let mut ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
 
@@ -158,6 +162,13 @@ impl Announce {
         let announce_request = AnnounceRequest::new(&query_string, &ip);
 
         info!("Announce\nRequest: {:}", announce_request);
+
+        let peer = Peer::new(&announce_request.peer_id, announce_request.port, announce_request.ip);
+        println!("Has file: {}", tracker.has_file(&announce_request.info_hash));
+        tracker.add_file(&announce_request.info_hash);
+        println!("Has file: {}", tracker.has_file(&announce_request.info_hash));
+        // tracker.addPeer(&announce_request.info_hash, &peer);
+        // println!("{:}", peer);
 
         let body = announce_request.bencode();
 
