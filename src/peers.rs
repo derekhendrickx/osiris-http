@@ -3,12 +3,12 @@ use std::net::IpAddr;
 #[derive(Debug)]
 #[derive(Clone)]
 pub struct Peer {
-    pub id: String,
+    id: String,
     port: u16,
     ip: IpAddr,
-    uploaded: u32,
-    downloaded: u32,
-    left: u32,
+    uploaded: u64,
+    downloaded: u64,
+    left: u64,
 }
 
 impl Peer {
@@ -21,5 +21,9 @@ impl Peer {
             downloaded: 0,
             left: 0,
         }
+    }
+
+    pub fn get_id(&self) -> &str {
+        &self.id
     }
 }

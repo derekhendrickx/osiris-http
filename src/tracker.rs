@@ -23,6 +23,6 @@ impl Tracker {
 
     pub fn add_peer(&mut self, info_hash: &str, peer: Box<Peer>) {
         let peers = self.files.get_mut(info_hash).unwrap();
-        peers.entry(peer.id.to_string()).or_insert(peer);
+        peers.entry(peer.get_id().to_string()).or_insert(peer);
     }
 }
