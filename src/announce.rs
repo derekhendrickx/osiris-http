@@ -1,11 +1,11 @@
+extern crate byteorder;
 extern crate hyper;
 extern crate qstring;
-extern crate byteorder;
 
 use std::str::FromStr;
 use std::net::{IpAddr, Ipv4Addr};
 use hyper::server::{Request, Response};
-use hyper::header::{Headers, ContentLength, ContentType, CacheControl, CacheDirective};
+use hyper::header::{CacheControl, CacheDirective, ContentLength, ContentType, Headers};
 use hyper::mime;
 use self::byteorder::{BigEndian, WriteBytesExt};
 use self::qstring::QString;
@@ -87,21 +87,19 @@ impl AnnounceRequest {
             peer_binary.write_u16::<BigEndian>(self.port).unwrap();
             ben_bytes!(peer_binary)
         } else {
-            let peers_dictionnary =
-                ben_map!{
-				"peer id" => ben_bytes!(self.peer_id),
-				"ip" => ben_bytes!(self.ip.to_string()),
-				"port" => ben_int!(i64::from(self.port))
-			};
+            let peers_dictionnary = ben_map!{
+                "peer id" => ben_bytes!(self.peer_id),
+                "ip" => ben_bytes!(self.ip.to_string()),
+                "port" => ben_int!(i64::from(self.port))
+            };
             ben_list!(peers_dictionnary)
         };
 
-        let message =
-            ben_map!{
+        let message = ben_map!{
             "interval" => ben_int!(30),
-			"complete" => ben_int!(1),
-			"incomplete" => ben_int!(0),
-			"peers" => peers
+            "complete" => ben_int!(1),
+            "incomplete" => ben_int!(0),
+            "peers" => peers
         };
 
         message.encode()

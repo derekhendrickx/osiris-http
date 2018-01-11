@@ -3,7 +3,7 @@ extern crate qstring;
 
 use std::fmt;
 use hyper::server::{Request, Response};
-use hyper::header::{Headers, ContentLength, ContentType, CacheControl, CacheDirective};
+use hyper::header::{CacheControl, CacheDirective, ContentLength, ContentType, Headers};
 use hyper::mime;
 use self::qstring::QString;
 
@@ -17,19 +17,19 @@ struct ScrapeRequest {
 
 impl ScrapeRequest {
     fn new(data: &QString) -> ScrapeRequest {
-        ScrapeRequest { info_hash: (&data["info_hash"]).to_string() }
+        ScrapeRequest {
+            info_hash: (&data["info_hash"]).to_string(),
+        }
     }
 
     fn bencode(self) -> Vec<u8> {
-        let files =
-            ben_map!{
+        let files = ben_map!{
             "complete" => ben_int!(1),
             "downloaded" => ben_int!(0),
             "incomplete" => ben_int!(0)
         };
 
-        let message =
-            ben_map!{
+        let message = ben_map!{
             "files" => files
         };
 

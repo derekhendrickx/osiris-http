@@ -1,7 +1,6 @@
 use std::net::IpAddr;
 
-#[derive(Debug)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Peer {
     id: String,
     port: u16,

@@ -1,10 +1,10 @@
 #[macro_use]
 extern crate bip_bencode;
-extern crate hyper;
+extern crate env_logger;
 extern crate futures;
+extern crate hyper;
 #[macro_use]
 extern crate log;
-extern crate env_logger;
 
 use std::sync::{Arc, Mutex};
 use std::net::Ipv4Addr;
