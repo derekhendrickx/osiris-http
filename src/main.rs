@@ -12,7 +12,7 @@ use hyper::server::Http;
 
 use tracker::Tracker;
 
-mod routes;
+mod router;
 mod tracker;
 mod announce;
 mod scrape;
@@ -25,7 +25,7 @@ fn main() {
     let tracker = Arc::new(Mutex::new(Tracker::new()));
     let server = Http::new()
         .bind(&addr, move || {
-            let routes = routes::Routes::new(Arc::clone(&tracker));
+            let routes = router::Router::new(Arc::clone(&tracker));
             Ok(routes)
         })
         .unwrap();

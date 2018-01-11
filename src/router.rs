@@ -10,17 +10,17 @@ use futures::future::FutureResult;
 use announce::Announce;
 use scrape::Scrape;
 
-pub struct Routes {
+pub struct Router {
     tracker: Arc<Mutex<Tracker>>,
 }
 
-impl Routes {
-    pub fn new(tracker: Arc<Mutex<Tracker>>) -> Routes {
-        Routes { tracker }
+impl Router {
+    pub fn new(tracker: Arc<Mutex<Tracker>>) -> Router {
+        Router { tracker }
     }
 }
 
-impl Service for Routes {
+impl Service for Router {
     type Request = Request;
     type Response = Response;
     type Error = Error;
