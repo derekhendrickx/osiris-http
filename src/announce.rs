@@ -131,7 +131,7 @@ impl Announce {
             announce_request.ip,
         ));
         println!("Tracker before: {:?}", torrents);
-        torrents.add_file(&announce_request.info_hash);
+        torrents.add_torrent(&announce_request.info_hash);
         torrents.add_peer(&announce_request.info_hash, peer);
         println!("Tracker after: {:?}", torrents);
 

@@ -14,12 +14,16 @@ impl Torrents {
         }
     }
 
-    pub fn has_file(&self, file: &str) -> bool {
-        self.torrents.contains_key(file)
+    pub fn has_torrent(&self, torrent: &str) -> bool {
+        self.torrents.contains_key(torrent)
     }
 
-    pub fn add_file(&mut self, file: &str) {
-        self.torrents.insert(file.to_string(), HashMap::new());
+    pub fn get_torrent(&self, info_hash: &str) -> Option<&HashMap<String, Box<Peer>>> {
+        self.torrents.get(info_hash)
+    }
+
+    pub fn add_torrent(&mut self, torrent: &str) {
+        self.torrents.insert(torrent.to_string(), HashMap::new());
     }
 
     pub fn add_peer(&mut self, info_hash: &str, peer: Box<Peer>) {
