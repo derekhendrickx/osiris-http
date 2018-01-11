@@ -16,6 +16,7 @@ mod router;
 mod torrents;
 mod announce;
 mod scrape;
+mod torrent;
 mod peer;
 
 fn main() {
