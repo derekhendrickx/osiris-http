@@ -11,7 +11,7 @@ use self::byteorder::{BigEndian, WriteBytesExt};
 use self::qstring::QString;
 
 use tracker::Tracker;
-use peers::Peer;
+use peer::Peer;
 
 pub struct Announce;
 

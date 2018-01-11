@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use peers::Peer;
+use peer::Peer;
 
 #[derive(Debug, Clone)]
 pub struct Tracker {

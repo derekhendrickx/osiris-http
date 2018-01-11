@@ -16,7 +16,7 @@ mod router;
 mod tracker;
 mod announce;
 mod scrape;
-mod peers;
+mod peer;
 
 fn main() {
     env_logger::init().unwrap();
