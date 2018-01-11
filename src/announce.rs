@@ -10,7 +10,7 @@ use hyper::mime;
 use self::byteorder::{BigEndian, WriteBytesExt};
 use self::qstring::QString;
 
-use tracker::Tracker;
+use torrents::Torrents;
 use peer::Peer;
 
 pub struct Announce;
@@ -107,7 +107,7 @@ impl AnnounceRequest {
 }
 
 impl Announce {
-    pub fn announce(tracker: &mut Tracker, request: &Request) -> Response {
+    pub fn announce(torrents: &mut Torrents, request: &Request) -> Response {
         let mut query_string = QString::from("");
         let mut ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
 
@@ -130,10 +130,10 @@ impl Announce {
             announce_request.port,
             announce_request.ip,
         ));
-        println!("Tracker before: {:?}", tracker);
-        tracker.add_file(&announce_request.info_hash);
-        tracker.add_peer(&announce_request.info_hash, peer);
-        println!("Tracker after: {:?}", tracker);
+        println!("Tracker before: {:?}", torrents);
+        torrents.add_file(&announce_request.info_hash);
+        torrents.add_peer(&announce_request.info_hash, peer);
+        println!("Tracker after: {:?}", torrents);
 
         let body = announce_request.bencode();
 

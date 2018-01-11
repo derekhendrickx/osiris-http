@@ -1,5 +1,5 @@
 use std::sync::{Arc, Mutex};
-use tracker::Tracker;
+use torrents::Torrents;
 
 use hyper::Error;
 use hyper::server::{Request, Response, Service};
@@ -11,12 +11,12 @@ use announce::Announce;
 use scrape::Scrape;
 
 pub struct Router {
-    tracker: Arc<Mutex<Tracker>>,
+    torrents: Arc<Mutex<Torrents>>,
 }
 
 impl Router {
-    pub fn new(tracker: Arc<Mutex<Tracker>>) -> Router {
-        Router { tracker }
+    pub fn new(torrents: Arc<Mutex<Torrents>>) -> Router {
+        Router { torrents }
     }
 }
 
@@ -27,10 +27,10 @@ impl Service for Router {
     type Future = FutureResult<Response, Error>;
 
     fn call(&self, request: Request) -> Self::Future {
-        let mut tracker = self.tracker.lock().unwrap();
+        let mut torrents = self.torrents.lock().unwrap();
         future::ok(match (request.method(), request.path()) {
-            (&Get, "/announce") => Announce::announce(&mut tracker, &request),
-            (&Get, "/scrape") => Scrape::scrape(&mut tracker, &request),
+            (&Get, "/announce") => Announce::announce(&mut torrents, &request),
+            (&Get, "/scrape") => Scrape::scrape(&mut torrents, &request),
             _ => Response::new().with_status(StatusCode::NotFound),
         })
     }
