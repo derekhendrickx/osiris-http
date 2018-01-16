@@ -9,9 +9,11 @@ use hyper::header::{CacheControl, CacheDirective, ContentLength, ContentType, He
 use hyper::mime;
 use self::byteorder::{BigEndian, WriteBytesExt};
 use self::qstring::QString;
+use url::percent_encoding::percent_decode;
 
 use torrents::Torrents;
 use peer::Peer;
+use info_hash::InfoHash;
 
 pub struct Announce;
 
@@ -25,12 +27,12 @@ enum AnnounceEvent {
 
 #[derive(Debug)]
 struct AnnounceRequest {
-    info_hash: String,
-    peer_id: String,
+    info_hash: InfoHash,
+    peer_id: Vec<u8>,
     port: u16,
-    uploaded: u32,
-    downloaded: u32,
-    left: u32,
+    uploaded: u64,
+    downloaded: u64,
+    left: u64,
     compact: bool,
     no_peer_id: bool,
     event: AnnounceEvent,
@@ -42,10 +44,17 @@ struct AnnounceRequest {
 
 impl AnnounceRequest {
     fn new(data: &QString, ip: &IpAddr) -> AnnounceRequest {
-        let ip_str = &data["ip"];
+        let ip_str = get_param(data, "ip");
         let mut announce_request_ip = *ip;
 
-        let event = match &*data["event"] {
+        let info_hash = InfoHash::new(get_param_as_bytes(data, "info_hash").unwrap());
+
+        let peer_id = match get_param_as_bytes(data, "peer_id") {
+            Some(bytes) => bytes,
+            None => get_param(data, "peer_id").as_bytes().to_vec(),
+        };
+
+        let event = match &*get_param(data, "event") {
             "started" => AnnounceEvent::Started,
             "stopped" => AnnounceEvent::Stopped,
             "completed" => AnnounceEvent::Completed,
@@ -53,23 +62,40 @@ impl AnnounceRequest {
         };
 
         if !ip_str.is_empty() {
-            announce_request_ip = (&data["ip"]).parse::<IpAddr>().unwrap();
+            announce_request_ip = get_param(data, "ip").parse::<IpAddr>().unwrap();
         }
 
+        let no_peer_id = match get_param(data, "no_peer_id").parse::<u8>() {
+            Err(_error) => false,
+            Ok(value) => value == 1,
+        };
+
+        let numwant = match get_param(data, "numwant").parse() {
+            Err(_error) => 0,
+            Ok(value) => value,
+        };
+
+        println!(
+            "Info hash = {:?}\tLength = {}",
+            info_hash.get_hash(),
+            info_hash.get_hash().len()
+        );
+        println!("Peer id = {:?}\tLength = {}", peer_id, peer_id.len());
+
         AnnounceRequest {
-            info_hash: (&data["info_hash"]).to_string(),
-            peer_id: (&data["peer_id"]).to_string(),
-            port: (&data["port"]).parse().unwrap(),
-            uploaded: (&data["uploaded"]).parse().unwrap(),
-            downloaded: (&data["downloaded"]).parse().unwrap(),
-            left: (&data["left"]).parse().unwrap(),
-            compact: (&data["compact"]).parse::<u8>().unwrap() == 1,
-            no_peer_id: (&data["no_peer_id"]).parse::<u8>().unwrap() == 1,
+            info_hash,
+            peer_id,
+            port: get_param(data, "port").parse().unwrap(),
+            uploaded: get_param(data, "uploaded").parse().unwrap(),
+            downloaded: get_param(data, "downloaded").parse().unwrap(),
+            left: get_param(data, "left").parse().unwrap(),
+            compact: get_param(data, "compact").parse::<u8>().unwrap() == 1,
+            no_peer_id,
             event,
             ip: announce_request_ip,
-            numwant: (&data["numwant"]).parse().unwrap(),
-            key: (&data["key"]).to_string(),
-            trackerid: (&data["trackerid"]).to_string(),
+            numwant,
+            key: get_param(data, "key").to_string(),
+            trackerid: String::from(""),
         }
     }
 
@@ -106,6 +132,19 @@ impl AnnounceRequest {
     }
 }
 
+fn get_param<'a>(data: &'a QString, param: &'a str) -> &'a str {
+    match data.get(param) {
+        None => "",
+        Some(ip) => ip,
+    }
+}
+
+fn get_param_as_bytes(data: &QString, param: &str) -> Option<Vec<u8>> {
+    let param_as_str = get_param(data, param).as_bytes();
+
+    percent_decode(param_as_str).if_any()
+}
+
 impl Announce {
     pub fn announce(torrents: &mut Torrents, request: &Request) -> Response {
         let mut query_string = QString::from("");
@@ -120,26 +159,30 @@ impl Announce {
             Some(str) => query_string = QString::from(str),
             None => error!("Query: None"),
         }
+        println!("{:?}", query_string);
 
         let announce_request = AnnounceRequest::new(&query_string, &ip);
 
-        info!("Announce\nRequest: {:?}", announce_request);
-
-        let peer = Box::new(Peer::new(
-            &announce_request.peer_id,
+        let peer = Peer::new(
+            announce_request.peer_id,
             announce_request.port,
             announce_request.ip,
-        ));
-        println!("Tracker before: {:?}", torrents);
-        torrents.add_torrent(&announce_request.info_hash);
+            announce_request.uploaded,
+            announce_request.downloaded,
+            announce_request.left,
+        );
+        println!("Tracker before:");
+        torrents.show_torrents();
+        torrents.add_torrent(announce_request.info_hash.clone());
         torrents.add_peer(&announce_request.info_hash, peer);
-        println!("Tracker after: {:?}", torrents);
+        println!("Tracker after:");
+        torrents.show_torrents();
 
-        let body = announce_request.bencode();
+        // let body = announce_request.bencode();
 
-        // let message = (ben_map!{
-        // 	"failure reason" => ben_bytes!("Tracker offline")
-        // }).encode();
+        let body = (ben_map!{
+            "failure reason" => ben_bytes!("Tracker offline")
+        }).encode();
 
         let mut headers = Headers::new();
         headers.set(ContentLength(body.len() as u64));
