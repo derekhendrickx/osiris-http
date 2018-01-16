@@ -1,5 +1,3 @@
-use std::net::IpAddr;
-
 #[derive(Debug, Clone)]
 pub struct Torrent {
     info_hash: String,
