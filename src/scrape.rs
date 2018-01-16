@@ -18,7 +18,7 @@ struct ScrapeRequest {
 impl ScrapeRequest {
     fn new(data: &QString) -> ScrapeRequest {
         ScrapeRequest {
-            info_hash: (&data["info_hash"]).to_string(),
+            info_hash: data.get("info_hash").unwrap().to_string(),
         }
     }
 
