@@ -5,6 +5,7 @@ extern crate futures;
 extern crate hyper;
 #[macro_use]
 extern crate log;
+extern crate url;
 
 use std::sync::{Arc, Mutex};
 use std::net::Ipv4Addr;
@@ -18,6 +19,7 @@ mod announce;
 mod scrape;
 mod torrent;
 mod peer;
+mod info_hash;
 
 fn main() {
     env_logger::init().unwrap();
