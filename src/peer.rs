@@ -2,7 +2,7 @@ use std::net::IpAddr;
 
 #[derive(Debug, Clone)]
 pub struct Peer {
-    id: String,
+    id: Vec<u8>,
     port: u16,
     ip: IpAddr,
     uploaded: u64,
@@ -11,18 +11,18 @@ pub struct Peer {
 }
 
 impl Peer {
-    pub fn new(id: &str, port: u16, ip: IpAddr) -> Peer {
+    pub fn new(id: Vec<u8>, port: u16, ip: IpAddr, uploaded: u64, downloaded: u64, left: u64) -> Peer {
         Peer {
-            id: String::from(id),
+            id,
             port,
             ip,
-            uploaded: 0,
-            downloaded: 0,
-            left: 0,
+            uploaded,
+            downloaded,
+            left,
         }
     }
 
-    pub fn get_id(&self) -> &str {
+    pub fn get_id(&self) -> &Vec<u8> {
         &self.id
     }
 }
