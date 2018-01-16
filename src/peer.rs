@@ -11,7 +11,14 @@ pub struct Peer {
 }
 
 impl Peer {
-    pub fn new(id: Vec<u8>, port: u16, ip: IpAddr, uploaded: u64, downloaded: u64, left: u64) -> Peer {
+    pub fn new(
+        id: Vec<u8>,
+        port: u16,
+        ip: IpAddr,
+        uploaded: u64,
+        downloaded: u64,
+        left: u64,
+    ) -> Peer {
         Peer {
             id,
             port,
