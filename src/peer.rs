@@ -32,4 +32,8 @@ impl Peer {
     pub fn get_id(&self) -> &Vec<u8> {
         &self.id
     }
+
+    pub fn get_left(&self) -> u64 {
+        self.left
+    }
 }
