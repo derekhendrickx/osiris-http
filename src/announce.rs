@@ -177,7 +177,10 @@ impl Announce {
         torrents.add_peer(&announce_request.info_hash, peer);
         println!("Tracker after:");
         torrents.show_torrents();
-        println!("Peers = {:?}", torrents.get_peers(&announce_request.info_hash));
+        println!(
+            "Peers = {:?}",
+            torrents.get_peers(&announce_request.info_hash)
+        );
 
         // let body = announce_request.bencode();
 

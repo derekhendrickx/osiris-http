@@ -28,7 +28,6 @@ impl Torrents {
 
         torrent
             .values()
-            .clone()
             .filter_map(|peer| {
                 if peer.get_left() == 0 {
                     Some(peer)
