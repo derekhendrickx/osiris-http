@@ -23,6 +23,22 @@ impl Torrents {
         self.torrents.get(info_hash)
     }
 
+    pub fn get_peers(&self, info_hash: &InfoHash) -> Vec<&Peer> {
+        let torrent = self.get_torrent(info_hash).unwrap();
+
+        torrent
+            .values()
+            .clone()
+            .filter_map(|peer| {
+                if peer.get_left() == 0 {
+                    Some(peer)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
     pub fn show_torrents(&self) {
         println!("{:?}", self.torrents)
     }
