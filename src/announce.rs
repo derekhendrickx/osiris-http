@@ -114,7 +114,7 @@ fn get_param_as_bytes(data: &QString, param: &str) -> Option<Vec<u8>> {
     percent_decode(param_as_str).if_any()
 }
 
-fn bencode_response(peers: &[&Peer], compact: bool) -> Vec<u8> {
+fn bencode_response(peers: &[&Peer], compact: bool, complete: u32, incomplete: u32) -> Vec<u8> {
     let bencoded_peers = if compact {
         let mut peer_binary = vec![];
         peers.into_iter().for_each(|peer| {
@@ -129,6 +129,7 @@ fn bencode_response(peers: &[&Peer], compact: bool) -> Vec<u8> {
 
             peer_binary.write_u16::<BigEndian>(peer.get_port()).unwrap();
         });
+        println!("Peers binary = {:?}", peer_binary);
         ben_bytes!(peer_binary)
     } else {
         let mut bencode_list = BencodeMut::new_list();
@@ -147,8 +148,8 @@ fn bencode_response(peers: &[&Peer], compact: bool) -> Vec<u8> {
 
     let message = ben_map!{
         "interval" => ben_int!(30),
-        "complete" => ben_int!(1),
-        "incomplete" => ben_int!(0),
+        "complete" => ben_int!(i64::from(complete)),
+        "incomplete" => ben_int!(i64::from(incomplete)),
         "peers" => bencoded_peers
     };
 
@@ -184,13 +185,18 @@ impl Announce {
         println!("Tracker before:");
         torrents.show_torrents();
         torrents.add_torrent(announce_request.info_hash.clone());
-        torrents.add_peer(&announce_request.info_hash, peer);
+        torrents.add_peer(&announce_request.info_hash, peer.clone());
         println!("Tracker after:");
         torrents.show_torrents();
-        let peers = torrents.get_peers(&announce_request.info_hash);
+        let peers = torrents.get_peers(&announce_request.info_hash, &peer);
         println!("Peers = {:?}", peers);
 
-        let body = bencode_response(&peers, announce_request.compact);
+        let body = bencode_response(
+            &peers,
+            announce_request.compact,
+            torrents.get_complete(&announce_request.info_hash),
+            torrents.get_incomplete(&announce_request.info_hash),
+        );
 
         // let body = (ben_map!{
         //     "failure reason" => ben_bytes!("Tracker offline")
