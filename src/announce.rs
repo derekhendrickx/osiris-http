@@ -9,7 +9,7 @@ use hyper::header::{CacheControl, CacheDirective, ContentLength, ContentType, He
 use hyper::mime;
 use self::byteorder::{BigEndian, WriteBytesExt};
 use self::qstring::QString;
-use bip_bencode::{BencodeMut, BMutAccess};
+use bip_bencode::{BMutAccess, BencodeMut};
 use url::percent_encoding::percent_decode;
 
 use torrents::Torrents;
@@ -114,47 +114,42 @@ fn get_param_as_bytes(data: &QString, param: &str) -> Option<Vec<u8>> {
     percent_decode(param_as_str).if_any()
 }
 
-fn bencode_response(peers: &Vec<&Peer>) -> Vec<u8> {
-    // let mut temp = Vec::new();
-    let mut bencode_list = BencodeMut::new_list();
-    {
-        let list = bencode_list.list_mut().unwrap();
+fn bencode_response(peers: &[&Peer], compact: bool) -> Vec<u8> {
+    let bencoded_peers = if compact {
+        let mut peer_binary = vec![];
         peers.into_iter().for_each(|peer| {
-            list.push(ben_map!{
-                "peer id" => ben_bytes!(peer.get_id().as_slice()),
-                "ip" => ben_bytes!(peer.get_ip().to_string()),
-                "port" => ben_int!(i64::from(peer.get_port()))
-            });
+            let ip = peer.get_ip();
+
+            if ip.is_ipv4() {
+                let ipv4 = Ipv4Addr::from_str(&ip.to_string()).unwrap();
+                for number in &ipv4.octets() {
+                    peer_binary.write_u8(*number).unwrap();
+                }
+            }
+
+            peer_binary.write_u16::<BigEndian>(peer.get_port()).unwrap();
         });
-    }
-
-    // let peers = if self.compact {
-    //     let mut peer_binary = vec![];
-    //     let ip = peer.get_ip();
-
-    //     if ip.is_ipv4() {
-    //         let ipv4 = Ipv4Addr::from_str(&ip.to_string()).unwrap();
-    //         for number in &ipv4.octets() {
-    //             peer_binary.write_u8(*number).unwrap();
-    //         }
-    //     }
-
-    //     peer_binary.write_u16::<BigEndian>(peer.get_port()).unwrap();
-    //     ben_bytes!(peer_binary)
-    // } else {
-    //     let peers_dictionnary = ben_map!{
-    //         "peer id" => ben_bytes!(self.peer_id),
-    //         "ip" => ben_bytes!(self.ip.to_string()),
-    //         "port" => ben_int!(i64::from(self.port))
-    //     };
-    //     ben_list!(peers_dictionnary)
-    // };
+        ben_bytes!(peer_binary)
+    } else {
+        let mut bencode_list = BencodeMut::new_list();
+        {
+            let list = bencode_list.list_mut().unwrap();
+            peers.into_iter().for_each(|peer| {
+                list.push(ben_map!{
+                    "peer id" => ben_bytes!(peer.get_id().as_slice()),
+                    "ip" => ben_bytes!(peer.get_ip().to_string()),
+                    "port" => ben_int!(i64::from(peer.get_port()))
+                });
+            });
+        }
+        bencode_list
+    };
 
     let message = ben_map!{
         "interval" => ben_int!(30),
         "complete" => ben_int!(1),
         "incomplete" => ben_int!(0),
-        "peers" => bencode_list
+        "peers" => bencoded_peers
     };
 
     message.encode()
@@ -193,12 +188,9 @@ impl Announce {
         println!("Tracker after:");
         torrents.show_torrents();
         let peers = torrents.get_peers(&announce_request.info_hash);
-        println!(
-            "Peers = {:?}",
-            peers
-        );
+        println!("Peers = {:?}", peers);
 
-        let body = bencode_response(&peers);
+        let body = bencode_response(&peers, announce_request.compact);
 
         // let body = (ben_map!{
         //     "failure reason" => ben_bytes!("Tracker offline")
