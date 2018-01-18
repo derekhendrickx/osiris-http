@@ -33,6 +33,14 @@ impl Peer {
         &self.id
     }
 
+    pub fn get_ip(&self) -> &IpAddr {
+        &self.ip
+    }
+
+    pub fn get_port(&self) -> u16 {
+        self.port
+    }
+
     pub fn get_left(&self) -> u64 {
         self.left
     }
