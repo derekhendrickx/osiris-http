@@ -45,3 +45,18 @@ impl Peer {
         self.left
     }
 }
+
+impl PartialEq for Peer {
+    fn eq(&self, other: &Peer) -> bool {
+        if self.id.len() != other.get_id().len() {
+            return false;
+        }
+
+        self.id
+            .iter()
+            .enumerate()
+            .any(|(index, &x)| x != other.get_id()[index])
+    }
+}
+
+impl Eq for Peer {}
