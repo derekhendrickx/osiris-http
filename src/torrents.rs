@@ -23,19 +23,37 @@ impl Torrents {
         self.torrents.get(info_hash)
     }
 
-    pub fn get_peers(&self, info_hash: &InfoHash) -> Vec<&Peer> {
+    pub fn get_peers(&self, info_hash: &InfoHash, current_peer: &Peer) -> Vec<&Peer> {
         let torrent = self.get_torrent(info_hash).unwrap();
 
         torrent
             .values()
             .filter_map(|peer| {
-                if peer.get_left() == 0 {
+                if peer == current_peer && peer.get_left() == 0 {
                     Some(peer)
                 } else {
                     None
                 }
             })
             .collect()
+    }
+
+    pub fn get_complete(&self, info_hash: &InfoHash) -> u32 {
+        let torrent = self.get_torrent(info_hash).unwrap();
+
+        torrent.values().fold(0, |sum, peer| {
+            let complete = if peer.get_left() == 0 { 1 } else { 0 };
+            sum + complete
+        })
+    }
+
+    pub fn get_incomplete(&self, info_hash: &InfoHash) -> u32 {
+        let torrent = self.get_torrent(info_hash).unwrap();
+
+        torrent.values().fold(0, |sum, peer| {
+            let incomplete = if peer.get_left() > 0 { 1 } else { 0 };
+            sum + incomplete
+        })
     }
 
     pub fn show_torrents(&self) {
