@@ -129,7 +129,7 @@ fn bencode_response(peers: &[&Peer], compact: bool, complete: u32, incomplete: u
 
             peer_binary.write_u16::<BigEndian>(peer.get_port()).unwrap();
         });
-        println!("Peers binary = {:?}", peer_binary);
+
         ben_bytes!(peer_binary)
     } else {
         let mut bencode_list = BencodeMut::new_list();
@@ -170,7 +170,6 @@ impl Announce {
             Some(str) => query_string = QString::from(str),
             None => error!("Query: None"),
         }
-        println!("{:?}", query_string);
 
         let announce_request = AnnounceRequest::new(&query_string, &ip);
 
@@ -182,14 +181,11 @@ impl Announce {
             announce_request.downloaded,
             announce_request.left,
         );
-        println!("Tracker before:");
-        torrents.show_torrents();
+
         torrents.add_torrent(announce_request.info_hash.clone());
         torrents.add_peer(&announce_request.info_hash, peer.clone());
-        println!("Tracker after:");
-        torrents.show_torrents();
+
         let peers = torrents.get_peers(&announce_request.info_hash, &peer);
-        println!("Peers = {:?}", peers);
 
         let body = bencode_response(
             &peers,
