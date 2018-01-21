@@ -17,7 +17,6 @@ mod router;
 mod torrents;
 mod announce;
 mod scrape;
-mod torrent;
 mod peer;
 mod info_hash;
 
