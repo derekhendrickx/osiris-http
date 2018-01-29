@@ -122,9 +122,10 @@ fn bencode_response(peers: &[&Peer], compact: bool, complete: u32, incomplete: u
 
             if ip.is_ipv4() {
                 let ipv4 = Ipv4Addr::from_str(&ip.to_string()).unwrap();
-                for number in &ipv4.octets() {
-                    peer_binary.write_u8(*number).unwrap();
-                }
+                peer_binary.extend(&ipv4.octets())
+                // for number in &ipv4.octets() {
+                //     peer_binary.write_u8(*number).unwrap();
+                // }
             }
 
             peer_binary.write_u16::<BigEndian>(peer.get_port()).unwrap();
@@ -163,12 +164,12 @@ impl Announce {
 
         match request.remote_addr() {
             Some(socket) => ip = socket.ip(),
-            None => error!("No IP"),
+            None => (),
         }
 
         match request.query() {
             Some(str) => query_string = QString::from(str),
-            None => error!("Query: None"),
+            None => (),
         }
 
         let announce_request = AnnounceRequest::new(&query_string, &ip);
