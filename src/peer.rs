@@ -1,5 +1,7 @@
 use std::net::IpAddr;
 
+use announce_request::AnnounceRequest;
+
 #[derive(Debug, Clone)]
 pub struct Peer {
     id: Vec<u8>,
@@ -11,21 +13,14 @@ pub struct Peer {
 }
 
 impl Peer {
-    pub fn new(
-        id: Vec<u8>,
-        port: u16,
-        ip: IpAddr,
-        uploaded: u64,
-        downloaded: u64,
-        left: u64,
-    ) -> Peer {
+    pub fn new(announce_request: &AnnounceRequest) -> Peer {
         Peer {
-            id,
-            port,
-            ip,
-            uploaded,
-            downloaded,
-            left,
+            id: announce_request.get_peer_id().clone(),
+            port: announce_request.get_port(),
+            ip: announce_request.get_ip().clone(),
+            uploaded: announce_request.get_uploaded(),
+            downloaded: announce_request.get_downloaded(),
+            left: announce_request.get_left(),
         }
     }
 
