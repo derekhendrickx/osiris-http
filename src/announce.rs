@@ -1,118 +1,18 @@
-extern crate byteorder;
-extern crate hyper;
-extern crate qstring;
-
 use std::str::FromStr;
 use std::net::{IpAddr, Ipv4Addr};
+
 use hyper::server::{Request, Response};
 use hyper::header::{CacheControl, CacheDirective, ContentLength, ContentType, Headers};
 use hyper::mime;
-use self::byteorder::{BigEndian, WriteBytesExt};
-use self::qstring::QString;
+use byteorder::{BigEndian, WriteBytesExt};
 use bip_bencode::{BMutAccess, BencodeMut};
-use url::percent_encoding::percent_decode;
+use qstring::QString;
 
+use announce_request::AnnounceRequest;
 use torrents::Torrents;
 use peer::Peer;
-use info_hash::InfoHash;
 
 pub struct Announce;
-
-#[derive(Debug)]
-enum AnnounceEvent {
-    Started,
-    Stopped,
-    Completed,
-    None,
-}
-
-#[derive(Debug)]
-struct AnnounceRequest {
-    info_hash: InfoHash,
-    peer_id: Vec<u8>,
-    port: u16,
-    uploaded: u64,
-    downloaded: u64,
-    left: u64,
-    compact: bool,
-    no_peer_id: bool,
-    event: AnnounceEvent,
-    ip: IpAddr,
-    numwant: u16,
-    key: String,
-    trackerid: String,
-}
-
-impl AnnounceRequest {
-    fn new(data: &QString, ip: &IpAddr) -> AnnounceRequest {
-        let ip_str = get_param(data, "ip");
-        let mut announce_request_ip = *ip;
-
-        let info_hash = InfoHash::new(get_param_as_bytes(data, "info_hash").unwrap());
-
-        let peer_id = match get_param_as_bytes(data, "peer_id") {
-            Some(bytes) => bytes,
-            None => get_param(data, "peer_id").as_bytes().to_vec(),
-        };
-
-        let event = match &*get_param(data, "event") {
-            "started" => AnnounceEvent::Started,
-            "stopped" => AnnounceEvent::Stopped,
-            "completed" => AnnounceEvent::Completed,
-            _ => AnnounceEvent::None,
-        };
-
-        if !ip_str.is_empty() {
-            announce_request_ip = get_param(data, "ip").parse::<IpAddr>().unwrap();
-        }
-
-        let no_peer_id = match get_param(data, "no_peer_id").parse::<u8>() {
-            Err(_error) => false,
-            Ok(value) => value == 1,
-        };
-
-        let numwant = match get_param(data, "numwant").parse() {
-            Err(_error) => 0,
-            Ok(value) => value,
-        };
-
-        println!(
-            "Info hash = {:?}\tLength = {}",
-            info_hash.get_hash(),
-            info_hash.get_hash().len()
-        );
-        println!("Peer id = {:?}\tLength = {}", peer_id, peer_id.len());
-
-        AnnounceRequest {
-            info_hash,
-            peer_id,
-            port: get_param(data, "port").parse().unwrap(),
-            uploaded: get_param(data, "uploaded").parse().unwrap(),
-            downloaded: get_param(data, "downloaded").parse().unwrap(),
-            left: get_param(data, "left").parse().unwrap(),
-            compact: get_param(data, "compact").parse::<u8>().unwrap() == 1,
-            no_peer_id,
-            event,
-            ip: announce_request_ip,
-            numwant,
-            key: get_param(data, "key").to_string(),
-            trackerid: String::from(""),
-        }
-    }
-}
-
-fn get_param<'a>(data: &'a QString, param: &'a str) -> &'a str {
-    match data.get(param) {
-        None => "",
-        Some(ip) => ip,
-    }
-}
-
-fn get_param_as_bytes(data: &QString, param: &str) -> Option<Vec<u8>> {
-    let param_as_str = get_param(data, param).as_bytes();
-
-    percent_decode(param_as_str).if_any()
-}
 
 fn bencode_response(peers: &[&Peer], compact: bool, complete: u32, incomplete: u32) -> Vec<u8> {
     let bencoded_peers = if compact {
@@ -172,26 +72,19 @@ impl Announce {
         }
 
         let announce_request = AnnounceRequest::new(&query_string, &ip);
+        let info_hash = announce_request.get_info_hash();
+        let peer = Peer::new(&announce_request);
 
-        let peer = Peer::new(
-            announce_request.peer_id,
-            announce_request.port,
-            announce_request.ip,
-            announce_request.uploaded,
-            announce_request.downloaded,
-            announce_request.left,
-        );
+        torrents.add_torrent(info_hash.clone());
+        torrents.add_peer(&info_hash, peer.clone());
 
-        torrents.add_torrent(announce_request.info_hash.clone());
-        torrents.add_peer(&announce_request.info_hash, peer.clone());
-
-        let peers = torrents.get_peers(&announce_request.info_hash, &peer);
+        let peers = torrents.get_peers(&info_hash, &peer);
 
         let body = bencode_response(
             &peers,
-            announce_request.compact,
-            torrents.get_complete(&announce_request.info_hash),
-            torrents.get_incomplete(&announce_request.info_hash),
+            announce_request.get_compact(),
+            torrents.get_complete(&info_hash),
+            torrents.get_incomplete(&info_hash),
         );
 
         // let body = (ben_map!{
