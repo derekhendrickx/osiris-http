@@ -76,15 +76,15 @@ impl Announce {
         let peer = Peer::new(&announce_request);
 
         torrents.add_torrent(info_hash.clone());
-        torrents.add_peer(&info_hash, peer.clone());
+        torrents.add_peer(info_hash, peer.clone());
 
-        let peers = torrents.get_peers(&info_hash, &peer);
+        let peers = torrents.get_peers(info_hash, &peer);
 
         let body = bencode_response(
             &peers,
             announce_request.get_compact(),
-            torrents.get_complete(&info_hash),
-            torrents.get_incomplete(&info_hash),
+            torrents.get_complete(info_hash),
+            torrents.get_incomplete(info_hash),
         );
 
         // let body = (ben_map!{

@@ -17,7 +17,7 @@ impl Peer {
         Peer {
             id: announce_request.get_peer_id().clone(),
             port: announce_request.get_port(),
-            ip: announce_request.get_ip().clone(),
+            ip: *announce_request.get_ip(),
             uploaded: announce_request.get_uploaded(),
             downloaded: announce_request.get_downloaded(),
             left: announce_request.get_left(),
