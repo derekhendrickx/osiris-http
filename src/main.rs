@@ -1,10 +1,12 @@
 #[macro_use]
 extern crate bip_bencode;
+extern crate byteorder;
 extern crate env_logger;
 extern crate futures;
 extern crate hyper;
 #[macro_use]
 extern crate log;
+extern crate qstring;
 extern crate url;
 
 use std::sync::{Arc, Mutex};
@@ -13,9 +15,11 @@ use hyper::server::Http;
 
 use torrents::Torrents;
 
+mod announce;
+mod announce_event;
+mod announce_request;
 mod router;
 mod torrents;
-mod announce;
 mod scrape;
 mod peer;
 mod info_hash;
