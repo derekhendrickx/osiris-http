@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use std::net::{IpAddr, Ipv4Addr};
 
-use hyper::{Request, Response, Body, HeaderMap};
+use hyper::{Request, Response, Body};
 use hyper::header::{CACHE_CONTROL, CONTENT_TYPE};
 use byteorder::{BigEndian, WriteBytesExt};
 use bip_bencode::{BMutAccess, BencodeMut};
@@ -56,7 +56,7 @@ fn bencode_response(peers: &[&Peer], compact: bool, complete: u32, incomplete: u
 }
 
 impl Announce {
-    pub fn announce(torrents: &mut Torrents, request: &Request<Body>) -> Body {
+    pub fn announce(torrents: &mut Torrents, request: &Request<Body>) -> Response<Body> {
         let mut query_string = QString::from("");
         let ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
 
@@ -90,10 +90,10 @@ impl Announce {
         //     "failure reason" => ben_bytes!("Tracker offline")
         // }).encode();
 
-        let mut headers = HeaderMap::new();
-        headers.insert(CACHE_CONTROL, "no-cache".parse().unwrap());
-        headers.insert(CONTENT_TYPE, "text/plain".parse().unwrap());
+        let mut response = Response::new(Body::from(body));
+        response.headers_mut().insert(CACHE_CONTROL, "no-cache".parse().unwrap());
+        response.headers_mut().insert(CONTENT_TYPE, "text/plain".parse().unwrap());
 
-        Body::from(body)
+        response
     }
 }

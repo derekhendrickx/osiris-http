@@ -25,7 +25,7 @@ pub fn routes(req: Request<Body>, torrents: &Arc<Mutex<Torrents>>) -> BoxFut {
 
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/announce") => {
-            *response.body_mut() = Announce::announce(&mut torrents, &req)
+            response = Announce::announce(&mut torrents, &req)
         }
 
         // (&Method::GET, "/scrape") => {
