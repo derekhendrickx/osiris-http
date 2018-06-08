@@ -1,37 +1,38 @@
-use std::sync::{Arc, Mutex};
+extern crate hyper;
+
 use torrents::Torrents;
 
-use hyper::Error;
-use hyper::server::{Request, Response, Service};
-use hyper::{Get, StatusCode};
 use futures::future;
-use futures::future::FutureResult;
+use hyper::rt::{Future};
+use hyper::{Body, Method, Request, Response, StatusCode};
 
-use announce::Announce;
-use scrape::Scrape;
+// use announce::Announce;
+// use scrape::Scrape;
 
-pub struct Router {
-    torrents: Arc<Mutex<Torrents>>,
-}
+/// We need to return different futures depending on the route matched,
+/// and we can do that with an enum, such as `futures::Either`, or with
+/// trait objects.
+///
+/// A boxed Future (trait object) is used as it is easier to understand
+/// and extend with more types. Advanced users could switch to `Either`.
+type BoxFut = Box<Future<Item = Response<Body>, Error = hyper::Error> + Send>;
 
-impl Router {
-    pub fn new(torrents: Arc<Mutex<Torrents>>) -> Router {
-        Router { torrents }
+pub fn routes(req: Request<Body>, torrents: &Torrents) -> BoxFut {
+    let mut response = Response::new(Body::empty());
+
+    match (req.method(), req.uri().path()) {
+        // (&Method::GET, "/announce") => {
+        //     Announce::announce(&mut torrents, &req)
+        // }
+
+        // (&Method::GET, "/scrape") => {
+        //     Scrape::scrape(&mut torrents, &req)
+        // }
+
+        _ => {
+            *response.status_mut() = StatusCode::NOT_FOUND;
+        }
     }
-}
 
-impl Service for Router {
-    type Request = Request;
-    type Response = Response;
-    type Error = Error;
-    type Future = FutureResult<Response, Error>;
-
-    fn call(&self, request: Request) -> Self::Future {
-        let mut torrents = self.torrents.lock().unwrap();
-        future::ok(match (request.method(), request.path()) {
-            (&Get, "/announce") => Announce::announce(&mut torrents, &request),
-            (&Get, "/scrape") => Scrape::scrape(&mut torrents, &request),
-            _ => Response::new().with_status(StatusCode::NotFound),
-        })
-    }
+    Box::new(future::ok(response))
 }
