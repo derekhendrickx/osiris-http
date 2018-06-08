@@ -2,7 +2,7 @@ use std::str::FromStr;
 use std::net::{IpAddr, Ipv4Addr};
 
 use hyper::{Request, Response, Body, HeaderMap};
-use hyper::header::{HeaderValue, CACHE_CONTROL, CONTENT_LENGTH, CONTENT_TYPE};
+use hyper::header::{CACHE_CONTROL, CONTENT_TYPE};
 use byteorder::{BigEndian, WriteBytesExt};
 use bip_bencode::{BMutAccess, BencodeMut};
 use qstring::QString;
@@ -90,10 +90,9 @@ impl Announce {
         //     "failure reason" => ben_bytes!("Tracker offline")
         // }).encode();
 
-        // let mut headers = HeaderMap::new();
-        // headers.insert(CONTENT_LENGTH, HeaderValue::from_bytes(body.len() as u64));
-        // headers.insert(CACHE_CONTROL, vec![CacheDirective::NoCache]);
-        // headers.insert(CONTENT_TYPE, mime::TEXT_PLAIN);
+        let mut headers = HeaderMap::new();
+        headers.insert(CACHE_CONTROL, "no-cache".parse().unwrap());
+        headers.insert(CONTENT_TYPE, "text/plain".parse().unwrap());
 
         Body::from(body)
     }
