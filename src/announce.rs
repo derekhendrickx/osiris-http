@@ -1,9 +1,8 @@
 use std::str::FromStr;
 use std::net::{IpAddr, Ipv4Addr};
 
-use hyper::server::{Request, Response};
-use hyper::header::{CacheControl, CacheDirective, ContentLength, ContentType, Headers};
-use hyper::mime;
+use hyper::{Request, Response, Body, HeaderMap};
+use hyper::header::{HeaderValue, CACHE_CONTROL, CONTENT_LENGTH, CONTENT_TYPE};
 use byteorder::{BigEndian, WriteBytesExt};
 use bip_bencode::{BMutAccess, BencodeMut};
 use qstring::QString;
@@ -57,16 +56,16 @@ fn bencode_response(peers: &[&Peer], compact: bool, complete: u32, incomplete: u
 }
 
 impl Announce {
-    pub fn announce(torrents: &mut Torrents, request: &Request) -> Response {
+    pub fn announce(torrents: &mut Torrents, request: &Request<Body>) -> Body {
         let mut query_string = QString::from("");
-        let mut ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
+        let ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
 
-        match request.remote_addr() {
-            Some(socket) => ip = socket.ip(),
-            None => error!("No IP"),
-        }
+        // match request.remote_addr() {
+        //     Some(socket) => ip = socket.ip(),
+        //     None => error!("No IP"),
+        // }
 
-        match request.query() {
+        match request.uri().query() {
             Some(str) => query_string = QString::from(str),
             None => error!("Query: None"),
         }
@@ -91,11 +90,11 @@ impl Announce {
         //     "failure reason" => ben_bytes!("Tracker offline")
         // }).encode();
 
-        let mut headers = Headers::new();
-        headers.set(ContentLength(body.len() as u64));
-        headers.set(CacheControl(vec![CacheDirective::NoCache]));
-        headers.set(ContentType(mime::TEXT_PLAIN));
+        // let mut headers = HeaderMap::new();
+        // headers.insert(CONTENT_LENGTH, HeaderValue::from_bytes(body.len() as u64));
+        // headers.insert(CACHE_CONTROL, vec![CacheDirective::NoCache]);
+        // headers.insert(CONTENT_TYPE, mime::TEXT_PLAIN);
 
-        Response::new().with_headers(headers).with_body(body)
+        Body::from(body)
     }
 }
