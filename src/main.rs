@@ -36,7 +36,7 @@ fn main() {
         let torrents = Arc::clone(&torrents);
 
         service_fn(move |req| {
-            router::routes(req, Arc::clone(&torrents))
+            router::routes(req, &torrents)
         })
     };
 

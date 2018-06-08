@@ -19,7 +19,7 @@ use announce::Announce;
 /// and extend with more types. Advanced users could switch to `Either`.
 type BoxFut = Box<Future<Item = Response<Body>, Error = hyper::Error> + Send>;
 
-pub fn routes(req: Request<Body>, torrents: Arc<Mutex<Torrents>>) -> BoxFut {
+pub fn routes(req: Request<Body>, torrents: &Arc<Mutex<Torrents>>) -> BoxFut {
     let mut torrents = torrents.lock().unwrap();
     let mut response = Response::new(Body::empty());
 
