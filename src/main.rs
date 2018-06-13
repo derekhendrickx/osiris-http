@@ -8,12 +8,15 @@ extern crate log;
 extern crate pretty_env_logger;
 extern crate qstring;
 extern crate url;
+extern crate tokio;
 
 use std::sync::{Arc, Mutex};
 use std::net::Ipv4Addr;
 use hyper::rt::Future;
 use hyper::service::service_fn;
-use hyper::Server;
+use hyper::server::conn::Http;
+use tokio::net::TcpListener;
+use tokio::prelude::*;
 
 use torrents::Torrents;
 
@@ -30,20 +33,33 @@ fn main() {
     pretty_env_logger::init();
     let ip = Ipv4Addr::new(0, 0, 0, 0);
     let addr = (ip.to_string() + ":6969").parse().unwrap();
+    let listener = TcpListener::bind(&addr).unwrap();
+    let http = Http::new();
     let torrents = Arc::new(Mutex::new(Torrents::new()));
 
-    let torrent_service = move || {
+    let server = listener.incoming().for_each(move |socket| {
+        println!("accepted socket; addr={:?}", socket.peer_addr().unwrap());
         let torrents = Arc::clone(&torrents);
 
-        service_fn(move |req| {
-            router::routes(req, &torrents)
-        })
-    };
+        let conn = http.serve_connection(socket, service_fn(move |req| {
+            router::routes(&req, &torrents)
+        }));
 
-    let server = Server::bind(&addr)
-        .serve(torrent_service)
-        .map_err(|e| eprintln!("server error: {}", e));
+        let fut = conn.map_err(|e| {
+            eprintln!("server connection error: {}", e);
+        });
+
+        hyper::rt::spawn(fut);
+        Ok(())
+    })
+    .map_err(|err| {
+        // All tasks must have an `Error` type of `()`. This forces error
+        // handling and helps avoid silencing failures.
+        //
+        // In our example, we are only going to log the error to STDOUT.
+        println!("accept error = {:?}", err);
+    });
 
     info!("Tracker running on {}...", addr);
-    hyper::rt::run(server);
+    tokio::run(server);
 }
