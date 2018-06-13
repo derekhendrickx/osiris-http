@@ -2,9 +2,8 @@ extern crate hyper;
 extern crate qstring;
 
 use std::fmt;
-use hyper::server::{Request, Response};
-use hyper::header::{CacheControl, CacheDirective, ContentLength, ContentType, Headers};
-use hyper::mime;
+use hyper::{Request, Response, Body};
+use hyper::header::{CACHE_CONTROL, CONTENT_TYPE};
 use self::qstring::QString;
 
 use torrents::Torrents;
@@ -39,15 +38,15 @@ impl ScrapeRequest {
 
 impl fmt::Display for ScrapeRequest {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "\ninfo_hash = {}\n", self.info_hash)
+        writeln!(f, "\ninfo_hash = {}", self.info_hash)
     }
 }
 
 impl Scrape {
-    pub fn scrape(_torrents: &mut Torrents, request: &Request) -> Response {
+    pub fn scrape(_torrents: &mut Torrents, request: &Request<Body>) -> Response<Body> {
         let mut query_string = QString::from("");
 
-        match request.query() {
+        match request.uri().query() {
             Some(str) => query_string = QString::from(str),
             None => error!("Query: None"),
         }
@@ -58,11 +57,10 @@ impl Scrape {
 
         let body = scrape_request.bencode();
 
-        let mut headers = Headers::new();
-        headers.set(ContentLength(body.len() as u64));
-        headers.set(CacheControl(vec![CacheDirective::NoCache]));
-        headers.set(ContentType(mime::TEXT_PLAIN));
+        let mut response = Response::new(Body::from(body));
+        response.headers_mut().insert(CACHE_CONTROL, "no-cache".parse().unwrap());
+        response.headers_mut().insert(CONTENT_TYPE, "text/plain".parse().unwrap());
 
-        Response::new().with_headers(headers).with_body(body)
+        response
     }
 }

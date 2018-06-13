@@ -9,7 +9,7 @@ use hyper::rt::{Future};
 use hyper::{Body, Method, Request, Response, StatusCode};
 
 use announce::Announce;
-// use scrape::Scrape;
+use scrape::Scrape;
 
 /// We need to return different futures depending on the route matched,
 /// and we can do that with an enum, such as `futures::Either`, or with
@@ -28,9 +28,9 @@ pub fn routes(req: &Request<Body>, torrents: &Arc<Mutex<Torrents>>) -> BoxFut {
             response = Announce::announce(&mut torrents, &req)
         }
 
-        // (&Method::GET, "/scrape") => {
-        //     Scrape::scrape(&mut torrents, &req)
-        // }
+        (&Method::GET, "/scrape") => {
+            response = Scrape::scrape(&mut torrents, &req)
+        }
 
         _ => {
             *response.status_mut() = StatusCode::NOT_FOUND;

@@ -25,7 +25,7 @@ mod announce_event;
 mod announce_request;
 mod router;
 mod torrents;
-// mod scrape;
+mod scrape;
 mod peer;
 mod info_hash;
 
