@@ -18,8 +18,10 @@ use hyper::server::conn::Http;
 use tokio::net::TcpListener;
 use tokio::prelude::*;
 
+use connection_info::ConnectionInfo;
 use torrents::Torrents;
 
+mod connection_info;
 mod announce;
 mod announce_event;
 mod announce_request;
@@ -38,10 +40,11 @@ fn main() {
     let torrents = Arc::new(Mutex::new(Torrents::new()));
 
     let server = listener.incoming().for_each(move |socket| {
-        println!("accepted socket; addr={:?}", socket.peer_addr().unwrap());
+        let connection_info = ConnectionInfo::new(&socket);
         let torrents = Arc::clone(&torrents);
 
-        let conn = http.serve_connection(socket, service_fn(move |req| {
+        let conn = http.serve_connection(socket, service_fn(move |mut req| {
+            connection_info.set(&mut req);
             router::routes(&req, &torrents)
         }));
 
