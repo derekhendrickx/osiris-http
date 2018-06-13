@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
+use hyper::{Body, Request};
 use tokio::net::TcpStream;
-use hyper::{Request, Body};
 
 // https://github.com/hyperium/hyper/issues/1402
 pub struct ConnectionInfo {
@@ -25,7 +25,7 @@ impl ConnectionInfo {
             remote_addr: connection_info.remote_addr,
         }
     }
-    
+
     pub fn set(&self, req: &mut Request<Body>) {
         req.extensions_mut().insert(ConnectionInfo {
             local_addr: self.local_addr,

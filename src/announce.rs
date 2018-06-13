@@ -1,14 +1,14 @@
 use std::net::{IpAddr, Ipv4Addr};
 
-use hyper::{Request, Body};
+use hyper::{Body, Request};
 use qstring::QString;
 
-use connection_info::ConnectionInfo;
 use announce_request::{AnnounceRequest, AnnounceRequestBuilder};
 use announce_response::AnnounceResponse;
-use torrents::Torrents;
-use peer::Peer;
+use connection_info::ConnectionInfo;
 use helper::{get_param, get_param_as_bytes};
+use peer::Peer;
+use torrents::Torrents;
 
 pub struct Announce;
 
@@ -23,7 +23,12 @@ impl Announce {
 
         let peers = torrents.get_peers(info_hash, &peer);
 
-        let announce_response = AnnounceResponse::new(&peers, announce_request.get_compact(), torrents.get_complete(info_hash), torrents.get_incomplete(info_hash));
+        let announce_response = AnnounceResponse::new(
+            &peers,
+            announce_request.get_compact(),
+            torrents.get_complete(info_hash),
+            torrents.get_incomplete(info_hash),
+        );
 
         let body = announce_response.bencode();
 
@@ -83,8 +88,9 @@ impl Announce {
         let key = get_param(&query_string, "key");
         let tracker_id = String::from("");
 
-        AnnounceRequestBuilder::new(info_hash, peer_id, port, uploaded, downloaded, left, compact)
-            .no_peer_id(no_peer_id)
+        AnnounceRequestBuilder::new(
+            info_hash, peer_id, port, uploaded, downloaded, left, compact,
+        ).no_peer_id(no_peer_id)
             .event(event)
             .ip(ip)
             .numwant(numwant)

@@ -1,7 +1,7 @@
 use std::net::IpAddr;
 
-use info_hash::InfoHash;
 use announce_event::AnnounceEvent;
+use info_hash::InfoHash;
 
 pub struct AnnounceRequestBuilder {
     info_hash: InfoHash,
@@ -20,7 +20,15 @@ pub struct AnnounceRequestBuilder {
 }
 
 impl AnnounceRequestBuilder {
-    pub fn new(info_hash: Vec<u8>, peer_id: Vec<u8>, port: u16, uploaded: u64, downloaded: u64, left: u64, compact: bool) -> Self {
+    pub fn new(
+        info_hash: Vec<u8>,
+        peer_id: Vec<u8>,
+        port: u16,
+        uploaded: u64,
+        downloaded: u64,
+        left: u64,
+        compact: bool,
+    ) -> Self {
         let info_hash = InfoHash::new(info_hash);
 
         AnnounceRequestBuilder {

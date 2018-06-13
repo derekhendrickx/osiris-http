@@ -1,8 +1,8 @@
-use std::str::FromStr;
 use std::net::Ipv4Addr;
+use std::str::FromStr;
 
-use byteorder::{BigEndian, WriteBytesExt};
 use bip_bencode::{BMutAccess, BencodeMut};
+use byteorder::{BigEndian, WriteBytesExt};
 
 use peer::Peer;
 

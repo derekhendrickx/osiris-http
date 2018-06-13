@@ -7,31 +7,31 @@ extern crate hyper;
 extern crate log;
 extern crate pretty_env_logger;
 extern crate qstring;
-extern crate url;
 extern crate tokio;
+extern crate url;
 
-use std::sync::{Arc, Mutex};
-use std::net::Ipv4Addr;
 use hyper::rt::Future;
-use hyper::service::service_fn;
 use hyper::server::conn::Http;
+use hyper::service::service_fn;
+use std::net::Ipv4Addr;
+use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
 use tokio::prelude::*;
 
 use connection_info::ConnectionInfo;
 use torrents::Torrents;
 
-mod connection_info;
 mod announce;
 mod announce_event;
 mod announce_request;
 mod announce_response;
-mod router;
-mod torrents;
-mod scrape;
-mod peer;
-mod info_hash;
+mod connection_info;
 mod helper;
+mod info_hash;
+mod peer;
+mod router;
+mod scrape;
+mod torrents;
 
 fn main() {
     pretty_env_logger::init();
@@ -41,29 +41,34 @@ fn main() {
     let http = Http::new();
     let torrents = Arc::new(Mutex::new(Torrents::new()));
 
-    let server = listener.incoming().for_each(move |socket| {
-        let connection_info = ConnectionInfo::new(&socket);
-        let torrents = Arc::clone(&torrents);
+    let server = listener
+        .incoming()
+        .for_each(move |socket| {
+            let connection_info = ConnectionInfo::new(&socket);
+            let torrents = Arc::clone(&torrents);
 
-        let conn = http.serve_connection(socket, service_fn(move |mut req| {
-            connection_info.set(&mut req);
-            router::routes(&req, &torrents)
-        }));
+            let conn = http.serve_connection(
+                socket,
+                service_fn(move |mut req| {
+                    connection_info.set(&mut req);
+                    router::routes(&req, &torrents)
+                }),
+            );
 
-        let fut = conn.map_err(|e| {
-            eprintln!("server connection error: {}", e);
+            let fut = conn.map_err(|e| {
+                eprintln!("server connection error: {}", e);
+            });
+
+            hyper::rt::spawn(fut);
+            Ok(())
+        })
+        .map_err(|err| {
+            // All tasks must have an `Error` type of `()`. This forces error
+            // handling and helps avoid silencing failures.
+            //
+            // In our example, we are only going to log the error to STDOUT.
+            println!("accept error = {:?}", err);
         });
-
-        hyper::rt::spawn(fut);
-        Ok(())
-    })
-    .map_err(|err| {
-        // All tasks must have an `Error` type of `()`. This forces error
-        // handling and helps avoid silencing failures.
-        //
-        // In our example, we are only going to log the error to STDOUT.
-        println!("accept error = {:?}", err);
-    });
 
     info!("Tracker running on {}...", addr);
     tokio::run(server);

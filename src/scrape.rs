@@ -1,10 +1,10 @@
 extern crate hyper;
 extern crate qstring;
 
-use std::fmt;
-use hyper::{Request, Response, Body};
-use hyper::header::{CACHE_CONTROL, CONTENT_TYPE};
 use self::qstring::QString;
+use hyper::header::{CACHE_CONTROL, CONTENT_TYPE};
+use hyper::{Body, Request, Response};
+use std::fmt;
 
 use torrents::Torrents;
 
@@ -58,8 +58,12 @@ impl Scrape {
         let body = scrape_request.bencode();
 
         let mut response = Response::new(Body::from(body));
-        response.headers_mut().insert(CACHE_CONTROL, "no-cache".parse().unwrap());
-        response.headers_mut().insert(CONTENT_TYPE, "text/plain".parse().unwrap());
+        response
+            .headers_mut()
+            .insert(CACHE_CONTROL, "no-cache".parse().unwrap());
+        response
+            .headers_mut()
+            .insert(CONTENT_TYPE, "text/plain".parse().unwrap());
 
         response
     }

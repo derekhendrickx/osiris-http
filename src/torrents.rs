@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use peer::Peer;
 use info_hash::InfoHash;
+use peer::Peer;
 
 #[derive(Debug, Clone)]
 pub struct Torrents {
