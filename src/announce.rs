@@ -7,6 +7,7 @@ use byteorder::{BigEndian, WriteBytesExt};
 use bip_bencode::{BMutAccess, BencodeMut};
 use qstring::QString;
 
+use connection_info::ConnectionInfo;
 use announce_request::AnnounceRequest;
 use torrents::Torrents;
 use peer::Peer;
@@ -58,12 +59,13 @@ fn bencode_response(peers: &[&Peer], compact: bool, complete: u32, incomplete: u
 impl Announce {
     pub fn announce(torrents: &mut Torrents, request: &Request<Body>) -> Response<Body> {
         let mut query_string = QString::from("");
-        let ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
+        let mut ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
+        let connection_info = ConnectionInfo::get(&request);
 
-        // match request.remote_addr() {
-        //     Some(socket) => ip = socket.ip(),
-        //     None => error!("No IP"),
-        // }
+        match connection_info.remote_addr() {
+            Some(socket) => ip = socket.ip(),
+            None => error!("No IP"),
+        }
 
         match request.uri().query() {
             Some(str) => query_string = QString::from(str),
