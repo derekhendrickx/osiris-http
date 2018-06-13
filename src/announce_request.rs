@@ -1,10 +1,100 @@
 use std::net::IpAddr;
-use url::percent_encoding::percent_decode;
-
-use qstring::QString;
 
 use info_hash::InfoHash;
 use announce_event::AnnounceEvent;
+
+pub struct AnnounceRequestBuilder {
+    info_hash: InfoHash,
+    peer_id: Vec<u8>,
+    port: u16,
+    uploaded: u64,
+    downloaded: u64,
+    left: u64,
+    compact: bool,
+    no_peer_id: Option<bool>,
+    event: Option<AnnounceEvent>,
+    ip: Option<IpAddr>,
+    numwant: Option<u16>,
+    key: Option<String>,
+    tracker_id: Option<String>,
+}
+
+impl AnnounceRequestBuilder {
+    pub fn new(info_hash: Vec<u8>, peer_id: Vec<u8>, port: u16, uploaded: u64, downloaded: u64, left: u64, compact: bool) -> Self {
+        let info_hash = InfoHash::new(info_hash);
+
+        AnnounceRequestBuilder {
+            info_hash,
+            peer_id,
+            port,
+            uploaded,
+            downloaded,
+            left,
+            compact,
+            no_peer_id: None,
+            event: None,
+            ip: None,
+            numwant: None,
+            key: None,
+            tracker_id: None,
+        }
+    }
+
+    pub fn no_peer_id(mut self, no_peer_id: bool) -> Self {
+        self.no_peer_id = Some(no_peer_id);
+        self
+    }
+
+    pub fn event(mut self, event: &str) -> Self {
+        let event = match &*event {
+            "started" => AnnounceEvent::Started,
+            "stopped" => AnnounceEvent::Stopped,
+            "completed" => AnnounceEvent::Completed,
+            _ => AnnounceEvent::None,
+        };
+
+        self.event = Some(event);
+        self
+    }
+
+    pub fn ip(mut self, ip: IpAddr) -> Self {
+        self.ip = Some(ip);
+        self
+    }
+
+    pub fn numwant(mut self, numwant: u16) -> Self {
+        self.numwant = Some(numwant);
+        self
+    }
+
+    pub fn key(mut self, key: String) -> Self {
+        self.key = Some(key);
+        self
+    }
+
+    pub fn tracker_id(mut self, tracker_id: String) -> Self {
+        self.tracker_id = Some(tracker_id);
+        self
+    }
+
+    pub fn build(self) -> AnnounceRequest {
+        AnnounceRequest {
+            info_hash: self.info_hash,
+            peer_id: self.peer_id,
+            port: self.port,
+            uploaded: self.uploaded,
+            downloaded: self.downloaded,
+            left: self.left,
+            compact: self.compact,
+            no_peer_id: self.no_peer_id,
+            event: self.event,
+            ip: self.ip,
+            numwant: self.numwant,
+            key: self.key,
+            tracker_id: self.tracker_id,
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct AnnounceRequest {
@@ -15,71 +105,15 @@ pub struct AnnounceRequest {
     downloaded: u64,
     left: u64,
     compact: bool,
-    no_peer_id: bool,
-    event: AnnounceEvent,
-    ip: IpAddr,
-    numwant: u16,
-    key: String,
-    trackerid: String,
+    no_peer_id: Option<bool>,
+    event: Option<AnnounceEvent>,
+    ip: Option<IpAddr>,
+    numwant: Option<u16>,
+    key: Option<String>,
+    tracker_id: Option<String>,
 }
 
 impl AnnounceRequest {
-    pub fn new(data: &QString, ip: &IpAddr) -> AnnounceRequest {
-        let ip_str = get_param(data, "ip");
-        let mut announce_request_ip = *ip;
-
-        let info_hash = InfoHash::new(get_param_as_bytes(data, "info_hash").unwrap());
-
-        let peer_id = match get_param_as_bytes(data, "peer_id") {
-            Some(bytes) => bytes,
-            None => get_param(data, "peer_id").as_bytes().to_vec(),
-        };
-
-        let event = match &*get_param(data, "event") {
-            "started" => AnnounceEvent::Started,
-            "stopped" => AnnounceEvent::Stopped,
-            "completed" => AnnounceEvent::Completed,
-            _ => AnnounceEvent::None,
-        };
-
-        if !ip_str.is_empty() {
-            announce_request_ip = get_param(data, "ip").parse::<IpAddr>().unwrap();
-        }
-
-        let no_peer_id = match get_param(data, "no_peer_id").parse::<u8>() {
-            Err(_error) => false,
-            Ok(value) => value == 1,
-        };
-
-        let numwant = match get_param(data, "numwant").parse() {
-            Err(_error) => 0,
-            Ok(value) => value,
-        };
-
-        println!(
-            "Info hash = {:?}\tLength = {}",
-            info_hash.get_hash(),
-            info_hash.get_hash().len()
-        );
-        println!("Peer id = {:?}\tLength = {}", peer_id, peer_id.len());
-
-        AnnounceRequest {
-            info_hash,
-            peer_id,
-            port: get_param(data, "port").parse().unwrap(),
-            uploaded: get_param(data, "uploaded").parse().unwrap(),
-            downloaded: get_param(data, "downloaded").parse().unwrap(),
-            left: get_param(data, "left").parse().unwrap(),
-            compact: get_param(data, "compact").parse::<u8>().unwrap() == 1,
-            no_peer_id,
-            event,
-            ip: announce_request_ip,
-            numwant,
-            key: get_param(data, "key").to_string(),
-            trackerid: String::from(""),
-        }
-    }
-
     pub fn get_info_hash(&self) -> &InfoHash {
         &self.info_hash
     }
@@ -88,7 +122,7 @@ impl AnnounceRequest {
         &self.peer_id
     }
 
-    pub fn get_ip(&self) -> &IpAddr {
+    pub fn get_ip(&self) -> &Option<IpAddr> {
         &self.ip
     }
 
@@ -112,36 +146,23 @@ impl AnnounceRequest {
         self.compact
     }
 
-    pub fn get_no_peer_id(&self) -> bool {
+    pub fn get_no_peer_id(&self) -> Option<bool> {
         self.no_peer_id
     }
 
-    pub fn get_event(&self) -> &AnnounceEvent {
+    pub fn get_event(&self) -> &Option<AnnounceEvent> {
         &self.event
     }
 
-    pub fn get_numwant(&self) -> u16 {
+    pub fn get_numwant(&self) -> Option<u16> {
         self.numwant
     }
 
-    pub fn get_key(&self) -> &str {
+    pub fn get_key(&self) -> &Option<String> {
         &self.key
     }
 
-    pub fn get_trackerid(&self) -> &str {
-        &self.trackerid
+    pub fn get_tracker_id(&self) -> &Option<String> {
+        &self.tracker_id
     }
-}
-
-fn get_param<'a>(data: &'a QString, param: &'a str) -> &'a str {
-    match data.get(param) {
-        None => "",
-        Some(ip) => ip,
-    }
-}
-
-fn get_param_as_bytes(data: &QString, param: &str) -> Option<Vec<u8>> {
-    let param_as_str = get_param(data, param).as_bytes();
-
-    percent_decode(param_as_str).if_any()
 }
