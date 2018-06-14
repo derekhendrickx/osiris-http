@@ -23,13 +23,13 @@ impl Torrents {
         self.torrents.get(info_hash)
     }
 
-    pub fn get_peers(&self, info_hash: &InfoHash, current_peer: &Peer) -> Vec<&Peer> {
+    pub fn get_peers(&self, info_hash: &InfoHash, current_peer_id: &[u8]) -> Vec<&Peer> {
         let torrent = self.get_torrent(info_hash).unwrap();
 
         torrent
             .values()
             .filter_map(|peer| {
-                if peer == current_peer && peer.get_left() == 0 {
+                if peer.get_id().as_slice() == current_peer_id && peer.get_left() == 0 {
                     Some(peer)
                 } else {
                     None
@@ -68,5 +68,23 @@ impl Torrents {
         let torrent = self.torrents.get_mut(info_hash).unwrap();
 
         torrent.entry(peer.get_id().to_vec()).or_insert_with(|| peer.to_owned());
+    }
+
+    pub fn remove_peer(&mut self, info_hash: &InfoHash, current_peer_id: &[u8]) {
+        let torrent = self.torrents.get_mut(info_hash).unwrap();
+
+        torrent.remove(current_peer_id);
+    }
+
+    pub fn update_peer(&mut self, info_hash: &InfoHash, current_peer_id: &[u8], data: (u64, u64, u64)) {
+        let torrent = self.torrents.get_mut(info_hash).unwrap();
+
+        torrent.entry(current_peer_id.to_vec()).and_modify(|peer| {
+            let (uploaded, downloaded, left) = data;
+
+            peer.set_uploaded(uploaded);
+            peer.set_downloaded(downloaded);
+            peer.set_left(left);
+        });
     }
 }
