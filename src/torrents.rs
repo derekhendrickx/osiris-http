@@ -61,13 +61,17 @@ impl Torrents {
     }
 
     pub fn add_torrent(&mut self, torrent: &InfoHash) {
-        self.torrents.entry(torrent.to_owned()).or_insert_with(HashMap::new);
+        self.torrents
+            .entry(torrent.to_owned())
+            .or_insert_with(HashMap::new);
     }
 
     pub fn add_peer(&mut self, info_hash: &InfoHash, peer: &Peer) {
         let torrent = self.torrents.get_mut(info_hash).unwrap();
 
-        torrent.entry(peer.get_id().to_vec()).or_insert_with(|| peer.to_owned());
+        torrent
+            .entry(peer.get_id().to_vec())
+            .or_insert_with(|| peer.to_owned());
     }
 
     pub fn remove_peer(&mut self, info_hash: &InfoHash, current_peer_id: &[u8]) {
@@ -76,7 +80,12 @@ impl Torrents {
         torrent.remove(current_peer_id);
     }
 
-    pub fn update_peer(&mut self, info_hash: &InfoHash, current_peer_id: &[u8], data: (u64, u64, u64)) {
+    pub fn update_peer(
+        &mut self,
+        info_hash: &InfoHash,
+        current_peer_id: &[u8],
+        data: (u64, u64, u64),
+    ) {
         let torrent = self.torrents.get_mut(info_hash).unwrap();
 
         torrent.entry(current_peer_id.to_vec()).and_modify(|peer| {
