@@ -4,8 +4,8 @@ pub struct InfoHash {
 }
 
 impl InfoHash {
-    pub fn new(hash: Vec<u8>) -> InfoHash {
-        InfoHash { hash }
+    pub fn new(hash: &[u8]) -> InfoHash {
+        InfoHash { hash: hash.to_owned() }
     }
 
     pub fn get_hash(&self) -> &[u8] {

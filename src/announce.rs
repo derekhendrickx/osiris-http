@@ -92,15 +92,15 @@ impl Announce {
         };
 
         let key = get_param(&query_string, "key");
-        let tracker_id = String::from("");
+        let tracker_id = get_param(&query_string, "trackerid");
 
         AnnounceRequestBuilder::new(
-            info_hash, peer_id, port, uploaded, downloaded, left, compact,
+            &info_hash, &peer_id, port, uploaded, downloaded, left, compact,
         ).no_peer_id(no_peer_id)
             .event(event)
-            .ip(ip)
+            .ip(&ip)
             .numwant(numwant)
-            .key(key.to_string())
+            .key(key)
             .tracker_id(tracker_id)
             .build()
     }

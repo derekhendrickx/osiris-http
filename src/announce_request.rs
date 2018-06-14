@@ -1,36 +1,34 @@
-use std::net::IpAddr;
+use std::net::{IpAddr, Ipv4Addr};
 
 use announce_event::AnnounceEvent;
 use info_hash::InfoHash;
 
-pub struct AnnounceRequestBuilder {
-    info_hash: InfoHash,
-    peer_id: Vec<u8>,
+pub struct AnnounceRequestBuilder<'a> {
+    info_hash: &'a [u8],
+    peer_id: &'a [u8],
     port: u16,
     uploaded: u64,
     downloaded: u64,
     left: u64,
     compact: bool,
     no_peer_id: Option<bool>,
-    event: Option<AnnounceEvent>,
-    ip: Option<IpAddr>,
+    event: Option<&'a str>,
+    ip: Option<&'a IpAddr>,
     numwant: Option<u16>,
-    key: Option<String>,
-    tracker_id: Option<String>,
+    key: Option<&'a str>,
+    tracker_id: Option<&'a str>,
 }
 
-impl AnnounceRequestBuilder {
+impl<'a> AnnounceRequestBuilder<'a> {
     pub fn new(
-        info_hash: Vec<u8>,
-        peer_id: Vec<u8>,
+        info_hash: &'a [u8],
+        peer_id: &'a [u8],
         port: u16,
         uploaded: u64,
         downloaded: u64,
         left: u64,
         compact: bool,
     ) -> Self {
-        let info_hash = InfoHash::new(info_hash);
-
         AnnounceRequestBuilder {
             info_hash,
             peer_id,
@@ -53,19 +51,12 @@ impl AnnounceRequestBuilder {
         self
     }
 
-    pub fn event(mut self, event: &str) -> Self {
-        let event = match &*event {
-            "started" => AnnounceEvent::Started,
-            "stopped" => AnnounceEvent::Stopped,
-            "completed" => AnnounceEvent::Completed,
-            _ => AnnounceEvent::None,
-        };
-
+    pub fn event(mut self, event: &'a str) -> Self {
         self.event = Some(event);
         self
     }
 
-    pub fn ip(mut self, ip: IpAddr) -> Self {
+    pub fn ip(mut self, ip: &'a IpAddr) -> Self {
         self.ip = Some(ip);
         self
     }
@@ -75,31 +66,40 @@ impl AnnounceRequestBuilder {
         self
     }
 
-    pub fn key(mut self, key: String) -> Self {
+    pub fn key(mut self, key: &'a str) -> Self {
         self.key = Some(key);
         self
     }
 
-    pub fn tracker_id(mut self, tracker_id: String) -> Self {
+    pub fn tracker_id(mut self, tracker_id: &'a str) -> Self {
         self.tracker_id = Some(tracker_id);
         self
     }
 
     pub fn build(self) -> AnnounceRequest {
+        let event = match &*self.event.unwrap_or("") {
+            "started" => AnnounceEvent::Started,
+            "stopped" => AnnounceEvent::Stopped,
+            "completed" => AnnounceEvent::Completed,
+            _ => AnnounceEvent::None,
+        };
+        let loopback = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
+        let ip = self.ip.unwrap_or(&loopback);
+
         AnnounceRequest {
-            info_hash: self.info_hash,
-            peer_id: self.peer_id,
+            info_hash: InfoHash::new(self.info_hash),
+            peer_id: self.peer_id.to_owned(),
             port: self.port,
             uploaded: self.uploaded,
             downloaded: self.downloaded,
             left: self.left,
             compact: self.compact,
             no_peer_id: self.no_peer_id,
-            event: self.event,
-            ip: self.ip,
+            event,
+            ip: ip.to_owned(),
             numwant: self.numwant,
-            key: self.key,
-            tracker_id: self.tracker_id,
+            key: self.key.map(str::to_string),
+            tracker_id: self.tracker_id.map(str::to_string),
         }
     }
 }
@@ -114,8 +114,8 @@ pub struct AnnounceRequest {
     left: u64,
     compact: bool,
     no_peer_id: Option<bool>,
-    event: Option<AnnounceEvent>,
-    ip: Option<IpAddr>,
+    event: AnnounceEvent,
+    ip: IpAddr,
     numwant: Option<u16>,
     key: Option<String>,
     tracker_id: Option<String>,
@@ -130,7 +130,7 @@ impl AnnounceRequest {
         &self.peer_id
     }
 
-    pub fn get_ip(&self) -> &Option<IpAddr> {
+    pub fn get_ip(&self) -> &IpAddr {
         &self.ip
     }
 
@@ -158,7 +158,7 @@ impl AnnounceRequest {
         self.no_peer_id
     }
 
-    pub fn get_event(&self) -> &Option<AnnounceEvent> {
+    pub fn get_event(&self) -> &AnnounceEvent {
         &self.event
     }
 
