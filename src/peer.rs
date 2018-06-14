@@ -36,8 +36,28 @@ impl Peer {
         self.port
     }
 
+    pub fn get_uploaded(&self) -> u64 {
+        self.uploaded
+    }
+
+    pub fn set_uploaded(&mut self, uploaded: u64) {
+        self.uploaded = uploaded
+    }
+
+    pub fn get_downloaded(&self) -> u64 {
+        self.downloaded
+    }
+
+    pub fn set_downloaded(&mut self, downloaded: u64) {
+        self.downloaded = downloaded
+    }
+
     pub fn get_left(&self) -> u64 {
         self.left
+    }
+
+    pub fn set_left(&mut self, left: u64) {
+        self.left = left
     }
 }
 
