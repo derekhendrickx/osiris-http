@@ -7,7 +7,6 @@ use announce_request::{AnnounceRequest, AnnounceRequestBuilder};
 use announce_response::AnnounceResponse;
 use connection_info::ConnectionInfo;
 use helper::{get_param, get_param_as_bytes};
-use peer::Peer;
 use torrents::Torrents;
 
 pub struct Announce;
@@ -15,19 +14,11 @@ pub struct Announce;
 impl Announce {
     pub fn announce(torrents: &mut Torrents, request: &Request<Body>) -> Body {
         let announce_request = Announce::parse_request(&request);
+        println!("{:?}", announce_request);
+        announce_request.get_event().handle(&announce_request, torrents);
         let info_hash = announce_request.get_info_hash();
-        let peer = Peer::new(&announce_request);
 
-        // TODO: Announce events (https://www.blogsolute.com/what-is-torrent-tracker-how-it-works-detail/20187/):
-        // 
-        // started: The first request to the tracker must include the event key with this value.
-        // stopped: Must be sent to the tracker if the client is shutting down gracefully.
-        // completed: Must be sent to the tracker when the download completes. However, must not be sent if the download was already 100% complete when the client started. Presumably, this is to allow the tracker to increment the “completed downloads” metric based solely on this event.
-
-        torrents.add_torrent(info_hash.clone());
-        torrents.add_peer(info_hash, peer.clone());
-
-        let peers = torrents.get_peers(info_hash, &peer);
+        let peers = torrents.get_peers(info_hash, announce_request.get_peer_id());
 
         let announce_response = AnnounceResponse::new(
             &peers,
