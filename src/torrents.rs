@@ -60,13 +60,13 @@ impl Torrents {
         println!("{:?}", self.torrents)
     }
 
-    pub fn add_torrent(&mut self, torrent: InfoHash) {
-        self.torrents.entry(torrent).or_insert_with(HashMap::new);
+    pub fn add_torrent(&mut self, torrent: &InfoHash) {
+        self.torrents.entry(torrent.to_owned()).or_insert_with(HashMap::new);
     }
 
-    pub fn add_peer(&mut self, info_hash: &InfoHash, peer: Peer) {
+    pub fn add_peer(&mut self, info_hash: &InfoHash, peer: &Peer) {
         let torrent = self.torrents.get_mut(info_hash).unwrap();
 
-        torrent.entry(peer.get_id().to_vec()).or_insert(peer);
+        torrent.entry(peer.get_id().to_vec()).or_insert_with(|| peer.to_owned());
     }
 }
