@@ -2,6 +2,7 @@ use std::net::{IpAddr, Ipv4Addr};
 
 use announce_event::AnnounceEvent;
 use info_hash::InfoHash;
+use torrents::Torrents;
 
 pub struct AnnounceRequestBuilder<'a> {
     info_hash: &'a [u8],
@@ -172,5 +173,9 @@ impl AnnounceRequest {
 
     pub fn get_tracker_id(&self) -> &Option<String> {
         &self.tracker_id
+    }
+
+    pub fn handle_event(&self, torrents: &mut Torrents) {
+        self.event.handle(self, torrents);
     }
 }

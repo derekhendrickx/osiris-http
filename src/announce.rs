@@ -14,10 +14,7 @@ pub struct Announce;
 impl Announce {
     pub fn announce(torrents: &mut Torrents, request: &Request<Body>) -> Body {
         let announce_request = Announce::parse_request(&request);
-        println!("{:?}", announce_request);
-        announce_request
-            .get_event()
-            .handle(&announce_request, torrents);
+        announce_request.handle_event(&mut *torrents);
         let info_hash = announce_request.get_info_hash();
 
         let peers = torrents.get_peers(info_hash, announce_request.get_peer_id());
