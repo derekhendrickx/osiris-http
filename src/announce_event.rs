@@ -44,7 +44,15 @@ impl AnnounceEvent {
                     announce_request.get_downloaded(),
                     announce_request.get_left(),
                 );
-                torrents.update_peer(info_hash, announce_request.get_peer_id(), data);
+
+                if torrents.has_torrent(info_hash) {
+                    torrents.update_peer(info_hash, announce_request.get_peer_id(), data);
+                } else {
+                    let peer = Peer::new(&announce_request);
+
+                    torrents.add_torrent(info_hash);
+                    torrents.add_peer(info_hash, &peer);
+                }
             }
         }
 
