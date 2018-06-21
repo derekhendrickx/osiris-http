@@ -1,49 +1,20 @@
-extern crate hyper;
-extern crate qstring;
-
-use self::qstring::QString;
-use hyper::header::{CACHE_CONTROL, CONTENT_TYPE};
-use hyper::{Body, Request, Response};
-use std::fmt;
+use qstring::QString;
+use hyper::{Body, Request};
 
 use torrents::Torrents;
+use scrape_request::ScrapeRequest;
+use helper::get_param_as_bytes;
 
 pub struct Scrape;
 
-struct ScrapeRequest {
-    info_hash: String,
-}
-
-impl ScrapeRequest {
-    fn new(data: &QString) -> ScrapeRequest {
-        ScrapeRequest {
-            info_hash: data.get("info_hash").unwrap().to_string(),
-        }
-    }
-
-    fn bencode(self) -> Vec<u8> {
-        let files = ben_map!{
-            "complete" => ben_int!(1),
-            "downloaded" => ben_int!(0),
-            "incomplete" => ben_int!(0)
-        };
-
-        let message = ben_map!{
-            "files" => files
-        };
-
-        message.encode()
-    }
-}
-
-impl fmt::Display for ScrapeRequest {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "\ninfo_hash = {}", self.info_hash)
-    }
-}
-
 impl Scrape {
-    pub fn scrape(_torrents: &mut Torrents, request: &Request<Body>) -> Response<Body> {
+    pub fn scrape(_torrents: &mut Torrents, request: &Request<Body>) -> Body {
+        let scrape_request = Self::parse_request(request);
+
+        Body::from("")
+    }
+
+    fn parse_request(request: &Request<Body>) -> ScrapeRequest {
         let mut query_string = QString::from("");
 
         match request.uri().query() {
@@ -51,20 +22,8 @@ impl Scrape {
             None => error!("Query: None"),
         }
 
-        let scrape_request = ScrapeRequest::new(&query_string);
+        let info_hash = get_param_as_bytes(&query_string, "info_hash").unwrap();
 
-        info!("Scrape Request: {:}", scrape_request);
-
-        let body = scrape_request.bencode();
-
-        let mut response = Response::new(Body::from(body));
-        response
-            .headers_mut()
-            .insert(CACHE_CONTROL, "no-cache".parse().unwrap());
-        response
-            .headers_mut()
-            .insert(CONTENT_TYPE, "text/plain".parse().unwrap());
-
-        response
+        ScrapeRequest::new(&info_hash)
     }
 }

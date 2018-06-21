@@ -30,6 +30,7 @@ mod helper;
 mod info_hash;
 mod peer;
 mod router;
+mod scrape_request;
 mod scrape;
 mod torrents;
 

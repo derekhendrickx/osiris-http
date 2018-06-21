@@ -35,7 +35,9 @@ pub fn routes(req: &Request<Body>, torrents: &Arc<Mutex<Torrents>>) -> BoxFut {
             *response.body_mut() = Announce::announce(&mut torrents, &req)
         }
 
-        (&Method::GET, "/scrape") => response = Scrape::scrape(&mut torrents, &req),
+        (&Method::GET, "/scrape") => {
+            *response.body_mut() = Scrape::scrape(&mut torrents, &req)
+        }
 
         _ => {
             *response.status_mut() = StatusCode::NOT_FOUND;
