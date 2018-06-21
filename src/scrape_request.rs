@@ -10,9 +10,7 @@ impl ScrapeRequest {
     pub fn new(info_hash: &[u8]) -> ScrapeRequest {
         let info_hash = InfoHash::new(info_hash);
 
-        ScrapeRequest {
-            info_hash,
-        }
+        ScrapeRequest { info_hash }
     }
 
     fn bencode(self) -> Vec<u8> {

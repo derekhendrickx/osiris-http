@@ -30,8 +30,8 @@ mod helper;
 mod info_hash;
 mod peer;
 mod router;
-mod scrape_request;
 mod scrape;
+mod scrape_request;
 mod torrents;
 
 fn main() {

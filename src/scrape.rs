@@ -1,9 +1,9 @@
-use qstring::QString;
 use hyper::{Body, Request};
+use qstring::QString;
 
-use torrents::Torrents;
-use scrape_request::ScrapeRequest;
 use helper::get_param_as_bytes;
+use scrape_request::ScrapeRequest;
+use torrents::Torrents;
 
 pub struct Scrape;
 
