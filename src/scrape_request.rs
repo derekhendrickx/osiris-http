@@ -13,15 +13,17 @@ impl ScrapeRequest {
         ScrapeRequest { info_hash }
     }
 
-    fn bencode(self) -> Vec<u8> {
+    pub fn bencode(&self) -> Vec<u8> {
         let files = ben_map!{
             "complete" => ben_int!(1),
             "downloaded" => ben_int!(0),
             "incomplete" => ben_int!(0)
         };
-
+        let info_hash = ben_map!{
+            self.info_hash.get_hash() => files
+        };
         let message = ben_map!{
-            "files" => files
+            "files" => info_hash
         };
 
         message.encode()

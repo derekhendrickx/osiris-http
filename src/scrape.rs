@@ -11,7 +11,7 @@ impl Scrape {
     pub fn scrape(_torrents: &mut Torrents, request: &Request<Body>) -> Body {
         let scrape_request = Self::parse_request(request);
 
-        Body::from("")
+        Body::from(scrape_request.bencode())
     }
 
     fn parse_request(request: &Request<Body>) -> ScrapeRequest {
